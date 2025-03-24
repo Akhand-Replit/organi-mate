@@ -2,8 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { messagesTable } from '@/integrations/supabase/custom-client';
 import { toast } from '@/hooks/use-toast';
 import { Message, User, ChatConversation } from '@/lib/types';
+import { MessageRow } from '@/lib/supabase-types';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import ChatConversationItem from './ChatConversationItem';
@@ -19,6 +21,18 @@ const ChatInterface: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Convert MessageRow to Message type
+  const convertMessageRowToMessage = (row: MessageRow): Message => ({
+    id: row.id,
+    sender_id: row.sender_id,
+    receiver_id: row.receiver_id,
+    content: row.content,
+    read: row.read,
+    created_at: row.created_at,
+    sender_name: row.sender_name || undefined,
+    receiver_name: row.receiver_name || undefined
+  });
   
   // Fetch conversations on component mount
   useEffect(() => {
@@ -42,11 +56,11 @@ const ChatInterface: React.FC = () => {
           filter: `receiver_id=eq.${user.id}`,
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as MessageRow;
           
           // Update messages if this is for the current conversation
           if (selectedUser && selectedUser.id === newMessage.sender_id) {
-            setMessages(prev => [...prev, newMessage]);
+            setMessages(prev => [...prev, convertMessageRowToMessage(newMessage)]);
             markMessageAsRead(newMessage.id);
           } else {
             // Update conversation list to show new message indicator
@@ -80,10 +94,9 @@ const ChatInterface: React.FC = () => {
     
     try {
       // Get all messages to/from this user
-      const { data: messagesData, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`) as { data: Message[] | null, error: any };
+      const { data: messagesData, error: messagesError } = await messagesTable
+        .select()
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
         
       if (messagesError) throw messagesError;
       
@@ -135,7 +148,7 @@ const ChatInterface: React.FC = () => {
         if (conversationMessages.length > 0) {
           conversationMap.set(profile.id, {
             user: otherUser,
-            lastMessage: conversationMessages[conversationMessages.length - 1],
+            lastMessage: convertMessageRowToMessage(conversationMessages[conversationMessages.length - 1]),
             unreadCount
           });
         }
@@ -168,15 +181,14 @@ const ChatInterface: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
+      const { data, error } = await messagesTable
+        .select()
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true }) as { data: Message[] | null, error: any };
+        .order('created_at', { ascending: true });
         
       if (error) throw error;
       
-      setMessages(data || []);
+      setMessages(data?.map(convertMessageRowToMessage) || []);
       
       // Mark messages from other user as read
       const unreadMessages = data?.filter(
@@ -206,10 +218,9 @@ const ChatInterface: React.FC = () => {
   
   const markMessageAsRead = async (messageId: string) => {
     try {
-      await supabase
-        .from('messages')
+      await messagesTable
         .update({ read: true })
-        .eq('id', messageId) as { data: any, error: any };
+        .eq('id', messageId);
     } catch (error) {
       console.error("Error marking message as read:", error);
     }
@@ -221,7 +232,7 @@ const ChatInterface: React.FC = () => {
     try {
       setIsLoading(true);
       
-      const message = {
+      const messageData: MessageInsert = {
         sender_id: user.id,
         receiver_id: selectedUser.id,
         content,
@@ -230,16 +241,15 @@ const ChatInterface: React.FC = () => {
         receiver_name: selectedUser.name || ''
       };
       
-      const { data, error } = await supabase
-        .from('messages')
-        .insert(message)
+      const { data, error } = await messagesTable
+        .insert(messageData)
         .select()
-        .single() as { data: Message | null, error: any };
+        .single();
         
       if (error) throw error;
       
       if (data) {
-        setMessages(prev => [...prev, data]);
+        setMessages(prev => [...prev, convertMessageRowToMessage(data)]);
         fetchConversations(); // Update last message in conversation list
       }
       
