@@ -18,6 +18,7 @@ import Unauthorized from "./pages/Unauthorized";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import Companies from "./pages/admin/Companies";
 import CreateCompany from "./pages/admin/CreateCompany";
 
 // Company pages
@@ -54,6 +55,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/companies" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <Companies />
                 </ProtectedRoute>
               } 
             />
