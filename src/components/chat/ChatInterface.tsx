@@ -50,8 +50,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setLoading(true);
 
         // Fetch messages sent by current user to the conversation user
-        const sentQuery = messagesTable.select()
-        const { data: sentMessages, error: sentError } = await sentQuery
+        const { data: sentMessages, error: sentError } = await supabase
+          .from('messages')
+          .select('*')
           .eq('sender_id', userId)
           .eq('receiver_id', conversationUser.id)
           .order('created_at');
@@ -59,8 +60,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (sentError) throw sentError;
 
         // Fetch messages received by current user from the conversation user
-        const receivedQuery = messagesTable.select()
-        const { data: receivedMessages, error: receivedError } = await receivedQuery
+        const { data: receivedMessages, error: receivedError } = await supabase
+          .from('messages')
+          .select('*')
           .eq('sender_id', conversationUser.id)
           .eq('receiver_id', userId)
           .order('created_at');
@@ -83,8 +85,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         
         if (unreadMessages && unreadMessages.length > 0) {
           await Promise.all(unreadMessages.map(msg => {
-            const updateQuery = messagesTable.update({ id: msg.id, read: true })
-            return updateQuery.eq('id', msg.id);
+            return supabase
+              .from('messages')
+              .update({ read: true })
+              .eq('id', msg.id);
           }));
         }
       } catch (error: any) {
@@ -118,8 +122,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setMessages((prev) => [...prev, newMessage]);
           
           // Mark the message as read
-          const updateQuery = messagesTable.update({ id: newMessage.id, read: true })
-          updateQuery.eq('id', newMessage.id);
+          supabase
+            .from('messages')
+            .update({ read: true })
+            .eq('id', newMessage.id);
         }
       )
       .subscribe();
@@ -149,7 +155,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         receiver_name: conversationUser.name || null
       };
       
-      const { data, error } = await messagesTable.insert(newMessage);
+      const { data, error } = await supabase
+        .from('messages')
+        .insert(newMessage)
+        .select();
       
       if (error) throw error;
       

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -36,7 +35,6 @@ const AdminMessages: React.FC = () => {
       try {
         setIsLoading(true);
         
-        // Get all companies to create conversation list
         const { data: companies, error } = await supabase
           .from('companies')
           .select('id, name, user_id')
@@ -44,10 +42,8 @@ const AdminMessages: React.FC = () => {
           
         if (error) throw error;
         
-        // For each company, get unread message count
         if (companies) {
           const conversationsWithUnread = await Promise.all(companies.map(async (company) => {
-            // Get the latest message exchanged with this company
             const { data: messages, error: msgError } = await supabase
               .from('messages')
               .select('*')
@@ -61,7 +57,6 @@ const AdminMessages: React.FC = () => {
               return null;
             }
             
-            // Get unread message count
             const { count, error: countError } = await supabase
               .from('messages')
               .select('*', { count: 'exact' })
@@ -78,7 +73,7 @@ const AdminMessages: React.FC = () => {
               user: {
                 id: company.user_id,
                 name: company.name,
-                email: '', // Not needed here
+                email: '',
                 company_id: company.id
               } as User,
               lastMessage: messages && messages.length > 0 ? messages[0] as Message : undefined,
@@ -86,19 +81,15 @@ const AdminMessages: React.FC = () => {
             } as ChatConversation;
           }));
           
-          // Remove null values and sort by unread count, then by company name
           const validConversations = conversationsWithUnread.filter(c => c !== null) as ChatConversation[];
           validConversations.sort((a, b) => {
-            // First sort by unread count (descending)
             if (b.unreadCount !== a.unreadCount) {
               return b.unreadCount - a.unreadCount;
             }
-            // Then by latest message (if available)
             if (a.lastMessage && b.lastMessage) {
               return new Date(b.lastMessage.created_at).getTime() - 
                      new Date(a.lastMessage.created_at).getTime();
             }
-            // Finally by name
             return a.user.name.localeCompare(b.user.name);
           });
           
@@ -128,17 +119,14 @@ const AdminMessages: React.FC = () => {
   
   const handleBack = () => {
     setSelectedUser(null);
-    // Refresh the conversations list when returning to the list view
     if (user) {
       setIsLoading(true);
-      // Re-fetch conversations (simplified - would be better to extract this to a function)
       supabase
         .from('companies')
         .select('id, name, user_id')
         .order('name')
         .then(({ data, error }) => {
           if (!error && data) {
-            // Processing would go here (simplified)
             setIsLoading(false);
           }
         });
@@ -155,7 +143,6 @@ const AdminMessages: React.FC = () => {
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)]">
-        {/* Conversations list - hide on mobile when chat is open */}
         <div className={`
           w-full md:w-80 border-r bg-background
           ${selectedUser ? 'hidden md:block' : 'block'}
@@ -195,14 +182,13 @@ const AdminMessages: React.FC = () => {
                   key={conversation.user.id}
                   conversation={conversation}
                   onClick={() => handleSelectUser(conversation.user)}
-                  active={selectedUser?.id === conversation.user.id}
+                  isActive={selectedUser?.id === conversation.user.id}
                 />
               ))
             )}
           </div>
         </div>
         
-        {/* Chat interface */}
         <div className="flex-1">
           {user && (
             <ChatInterface 

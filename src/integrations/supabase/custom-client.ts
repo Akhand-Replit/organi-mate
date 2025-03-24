@@ -6,7 +6,7 @@ import { MessageRow, MessageInsert, MessageUpdate } from '@/lib/supabase-types';
 
 export const messagesTable = {
   select: () => {
-    return supabase.from('messages');
+    return supabase.from('messages').select();
   },
   
   insert: (data: MessageInsert) => {
@@ -18,6 +18,6 @@ export const messagesTable = {
   },
   
   delete: () => {
-    return supabase.from('messages');
+    return supabase.from('messages').delete();
   },
 };
