@@ -50,7 +50,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setLoading(true);
 
         // Fetch messages sent by current user to the conversation user
-        const { data: sentMessages, error: sentError } = await messagesTable.select()
+        const sentQuery = messagesTable.select()
+        const { data: sentMessages, error: sentError } = await sentQuery
           .eq('sender_id', userId)
           .eq('receiver_id', conversationUser.id)
           .order('created_at');
@@ -58,7 +59,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (sentError) throw sentError;
 
         // Fetch messages received by current user from the conversation user
-        const { data: receivedMessages, error: receivedError } = await messagesTable.select()
+        const receivedQuery = messagesTable.select()
+        const { data: receivedMessages, error: receivedError } = await receivedQuery
           .eq('sender_id', conversationUser.id)
           .eq('receiver_id', userId)
           .order('created_at');
@@ -80,10 +82,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         );
         
         if (unreadMessages && unreadMessages.length > 0) {
-          await Promise.all(unreadMessages.map(msg => 
-            messagesTable.update({ id: msg.id, read: true })
-              .eq('id', msg.id)
-          ));
+          await Promise.all(unreadMessages.map(msg => {
+            const updateQuery = messagesTable.update({ id: msg.id, read: true })
+            return updateQuery.eq('id', msg.id);
+          }));
         }
       } catch (error: any) {
         console.error('Error fetching messages:', error);
@@ -116,8 +118,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setMessages((prev) => [...prev, newMessage]);
           
           // Mark the message as read
-          messagesTable.update({ id: newMessage.id, read: true })
-            .eq('id', newMessage.id);
+          const updateQuery = messagesTable.update({ id: newMessage.id, read: true })
+          updateQuery.eq('id', newMessage.id);
         }
       )
       .subscribe();

@@ -5,15 +5,19 @@ import { supabase } from './client';
 import { MessageRow, MessageInsert, MessageUpdate } from '@/lib/supabase-types';
 
 export const messagesTable = {
-  select: () => 
-    supabase.from('messages'),
+  select: () => {
+    return supabase.from('messages');
+  },
   
-  insert: (data: MessageInsert) => 
-    supabase.from('messages').insert(data),
+  insert: (data: MessageInsert) => {
+    return supabase.from('messages').insert(data);
+  },
   
-  update: (data: MessageUpdate) => 
-    supabase.from('messages').update(data),
+  update: (data: MessageUpdate) => {
+    return supabase.from('messages').update(data);
+  },
   
-  delete: () => 
-    supabase.from('messages'),
+  delete: () => {
+    return supabase.from('messages');
+  },
 };

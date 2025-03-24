@@ -21,6 +21,7 @@ import Unauthorized from "./pages/Unauthorized";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Companies from "./pages/admin/Companies";
 import CreateCompany from "./pages/admin/CreateCompany";
+import AdminMessages from "./pages/admin/Messages";
 
 // Company pages
 import CompanyDashboard from "./pages/company/Dashboard";
@@ -82,6 +83,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <CreateCompany />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/messages" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminMessages />
                 </ProtectedRoute>
               } 
             />
