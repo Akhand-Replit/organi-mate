@@ -22,6 +22,11 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import Companies from "./pages/admin/Companies";
 import CreateCompany from "./pages/admin/CreateCompany";
 import AdminMessages from "./pages/admin/Messages";
+import AdminUsers from "./pages/admin/Users";
+import AdminSubscriptions from "./pages/admin/Subscriptions";
+import AdminReports from "./pages/admin/Reports";
+import AdminJobs from "./pages/admin/Jobs";
+import AdminSettings from "./pages/admin/Settings";
 
 // Company pages
 import CompanyDashboard from "./pages/company/Dashboard";
@@ -91,6 +96,46 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AdminMessages />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUsers />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/subscriptions" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminSubscriptions />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/reports" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminReports />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/jobs" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminJobs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/settings" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminSettings />
                 </ProtectedRoute>
               } 
             />

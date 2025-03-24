@@ -9,6 +9,15 @@ export const messagesTable = {
     return supabase.from('messages').select();
   },
   
+  selectByParticipants: (userId1: string, userId2: string) => {
+    return supabase
+      .from('messages')
+      .select()
+      .or(`sender_id.eq.${userId1},receiver_id.eq.${userId1}`)
+      .or(`sender_id.eq.${userId2},receiver_id.eq.${userId2}`)
+      .order('created_at', { ascending: true });
+  },
+  
   insert: (data: MessageInsert) => {
     return supabase.from('messages').insert(data);
   },
@@ -17,7 +26,26 @@ export const messagesTable = {
     return supabase.from('messages').update(data);
   },
   
-  delete: () => {
-    return supabase.from('messages').delete();
+  markAsRead: (receiverId: string, senderId: string) => {
+    return supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('receiver_id', receiverId)
+      .eq('sender_id', senderId);
   },
+  
+  delete: (messageId: string) => {
+    return supabase
+      .from('messages')
+      .delete()
+      .eq('id', messageId);
+  },
+  
+  getUnreadCount: (userId: string) => {
+    return supabase
+      .from('messages')
+      .select('*', { count: 'exact' })
+      .eq('receiver_id', userId)
+      .eq('read', false);
+  }
 };
