@@ -27,10 +27,13 @@ serve(async (req) => {
       }
     );
 
+    console.log("Supabase client created");
+
     // Get the authorization header from the request
     const authorizationHeader = req.headers.get('Authorization')?.split(' ')[1];
     
     if (!authorizationHeader) {
+      console.log("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
         {
@@ -40,10 +43,16 @@ serve(async (req) => {
       );
     }
 
+    console.log("Getting user from auth header");
     // Get the user from the auth header
     const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(authorizationHeader);
 
-    if (authError || !authUser) {
+    if (authError) {
+      console.log("Auth error:", authError);
+    }
+
+    if (!authUser) {
+      console.log("No user found");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         {
@@ -53,6 +62,7 @@ serve(async (req) => {
       );
     }
 
+    console.log("Getting user profile");
     // Get the user's role from profiles
     const { data: profile, error: profileError } = await supabaseClient
       .from('profiles')
@@ -60,9 +70,10 @@ serve(async (req) => {
       .eq('id', authUser.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError) {
+      console.log("Profile error:", profileError);
       return new Response(
-        JSON.stringify({ error: "Failed to get user profile" }),
+        JSON.stringify({ error: "Failed to get user profile: " + profileError.message }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -70,11 +81,31 @@ serve(async (req) => {
       );
     }
 
+    if (!profile) {
+      console.log("No profile found");
+      return new Response(
+        JSON.stringify({ error: "User profile not found" }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    console.log("User role:", profile.role);
+
     // Parse the request body
-    const { email, password, userData } = await req.json();
+    const requestData = await req.json();
+    const { email, password, userData } = requestData;
+
+    console.log("Request data received:", {
+      email,
+      userData: { ...userData, password: "[REDACTED]" }
+    });
 
     // Validate request body
     if (!email || !password || !userData.name || !userData.role) {
+      console.log("Missing required fields");
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
         {
@@ -88,6 +119,7 @@ serve(async (req) => {
     if (profile.role === 'admin') {
       // Admin can only create company users
       if (userData.role !== 'company') {
+        console.log("Admin can only create company users");
         return new Response(
           JSON.stringify({ error: "Admin can only create company users" }),
           {
@@ -101,6 +133,7 @@ serve(async (req) => {
       const allowedRoles = ['branch_manager', 'assistant_manager', 'employee'];
       
       if (!allowedRoles.includes(userData.role)) {
+        console.log("Company can only create employee-type users");
         return new Response(
           JSON.stringify({ error: "Company can only create employee-type users" }),
           {
@@ -114,6 +147,7 @@ serve(async (req) => {
       userData.company_id = profile.company_id;
     } else {
       // Other roles cannot create users
+      console.log("User does not have permission to create users");
       return new Response(
         JSON.stringify({ error: "You do not have permission to create users" }),
         {
@@ -123,6 +157,8 @@ serve(async (req) => {
       );
     }
 
+    console.log("Creating user with role:", userData.role);
+    
     // Create the user 
     const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
       email,
@@ -132,6 +168,7 @@ serve(async (req) => {
     });
 
     if (createError) {
+      console.log("Error creating user:", createError);
       return new Response(
         JSON.stringify({ error: createError.message }),
         {
@@ -141,8 +178,11 @@ serve(async (req) => {
       );
     }
 
+    console.log("User created successfully, now handling additional operations based on role");
+
     // If company user is created, create a company record
     if (userData.role === 'company' && newUser.user) {
+      console.log("Creating company record for:", userData.name);
       const { error: companyError } = await supabaseClient
         .from('companies')
         .insert({
@@ -158,6 +198,7 @@ serve(async (req) => {
 
     // If employee user is created, create an employee record
     if (['branch_manager', 'assistant_manager', 'employee'].includes(userData.role) && newUser.user) {
+      console.log("Creating employee record for:", userData.name);
       const { error: employeeError } = await supabaseClient
         .from('employees')
         .insert({
@@ -174,6 +215,7 @@ serve(async (req) => {
       }
     }
 
+    console.log("All operations completed successfully");
     return new Response(
       JSON.stringify({ 
         message: "User created successfully", 
@@ -185,7 +227,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Unexpected error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
@@ -195,3 +237,4 @@ serve(async (req) => {
     );
   }
 });
+

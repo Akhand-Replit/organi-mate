@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -91,21 +90,42 @@ export async function createUser(userData: CreateUserData, adminKey?: string) {
   // This is used by admins and companies to create users
   const { email, password, name, role, company_id, branch_id } = userData;
   
-  const { data, error } = await supabase.functions.invoke('create-user', {
-    body: {
+  try {
+    console.log("Invoking create-user function with data:", {
       email,
-      password,
-      userData: {
-        name,
-        role,
-        company_id,
-        branch_id
+      role,
+      name,
+      company_id,
+      branch_id
+    });
+    
+    const { data, error } = await supabase.functions.invoke('create-user', {
+      body: {
+        email,
+        password,
+        userData: {
+          name,
+          role,
+          company_id,
+          branch_id
+        }
       }
+    });
+    
+    if (error) {
+      console.error("Supabase function error:", error);
+      throw new Error(`Function error: ${error.message}`);
     }
-  });
-  
-  if (error) throw error;
-  return data;
+    
+    if (!data) {
+      throw new Error("No data returned from function");
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error in createUser:", error);
+    throw error;
+  }
 }
 
 export async function updatePassword(currentPassword: string, newPassword: string) {

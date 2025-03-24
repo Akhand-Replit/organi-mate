@@ -6,7 +6,6 @@ import {
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
@@ -17,6 +16,7 @@ import CompanyForm from '@/components/admin/CompanyForm';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (formData: {
@@ -26,14 +26,23 @@ const CreateCompany = () => {
     confirmPassword: string;
   }) => {
     setIsLoading(true);
+    setError(null);
     
     try {
-      await createUser({
+      console.log("Creating company with data:", {
+        email: formData.email,
+        name: formData.name,
+        role: 'company'
+      });
+      
+      const result = await createUser({
         email: formData.email,
         password: formData.password,
         name: formData.name,
         role: 'company' as UserRole,
       });
+      
+      console.log("Create user result:", result);
       
       toast({
         title: "Company created",
@@ -41,6 +50,9 @@ const CreateCompany = () => {
       });
       
     } catch (error: any) {
+      console.error("Error creating company:", error);
+      setError(error.message || "There was a problem creating the company.");
+      
       toast({
         title: "Error creating company",
         description: error.message || "There was a problem creating the company.",
@@ -73,6 +85,13 @@ const CreateCompany = () => {
               onSubmit={handleSubmit}
               isLoading={isLoading}
             />
+            
+            {error && (
+              <div className="mt-4 p-3 bg-destructive/15 text-destructive rounded-md text-sm">
+                <p className="font-semibold">Error creating company:</p>
+                <p>{error}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
