@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Settings,
   CreditCard,
-  Briefcase
+  Briefcase,
+  UserPlus
 } from 'lucide-react';
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,6 +25,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Building2, label: 'Companies', path: '/admin/companies' },
+    { icon: UserPlus, label: 'Create Company', path: '/admin/create-company' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     { icon: CreditCard, label: 'Subscriptions', path: '/admin/subscriptions' },
     { icon: FileText, label: 'Reports', path: '/admin/reports' },

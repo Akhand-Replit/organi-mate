@@ -32,15 +32,28 @@ const Login: React.FC = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from || '/dashboard';
-      navigate(from, { replace: true });
+      redirectBasedOnRole(user.role);
     }
-  }, [user, navigate, location]);
+  }, [user]);
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const redirectBasedOnRole = (role) => {
+    const roleRedirects = {
+      admin: '/admin/dashboard',
+      company: '/company/dashboard',
+      branch_manager: '/branch/dashboard',
+      assistant_manager: '/branch/dashboard',
+      employee: '/employee/dashboard',
+      job_seeker: '/dashboard'
+    };
+
+    const redirectPath = roleRedirects[role] || '/dashboard';
+    navigate(redirectPath, { replace: true });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +62,10 @@ const Login: React.FC = () => {
     try {
       await signIn(email, password);
       // Auth state change is handled by AuthProvider
-      // No need to manually redirect here
+      toast({
+        title: "Login successful",
+        description: "You have been logged in to your account.",
+      });
     } catch (error: any) {
       toast({
         title: "Login failed",
@@ -65,7 +81,7 @@ const Login: React.FC = () => {
     <Layout hideFooter>
       <div className="min-h-screen flex items-center justify-center p-4 py-32">
         <div className="w-full max-w-md animate-fade-in">
-          <Tabs defaultValue="company" onValueChange={setUserType}>
+          <Tabs defaultValue={userType} onValueChange={setUserType}>
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="company">Company</TabsTrigger>
               <TabsTrigger value="employee">Employee</TabsTrigger>
@@ -143,6 +159,14 @@ const LoginCard: React.FC<LoginCardProps> = ({
   handleSubmit,
   userType
 }) => {
+  const placeholderText = userType === 'admin' 
+    ? 'Enter admin username' 
+    : 'Enter your email or username';
+  
+  const helpText = userType === 'admin' 
+    ? 'Use "admin" as username and "ADMINPASSWORD" as password' 
+    : '';
+
   return (
     <Card className="glass-card border border-border/50 shadow-lg">
       <CardHeader>
@@ -157,13 +181,16 @@ const LoginCard: React.FC<LoginCardProps> = ({
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 id={`${userType}-email`}
-                placeholder="Enter your email or username"
+                placeholder={placeholderText}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
               />
             </div>
+            {helpText && (
+              <p className="text-xs text-muted-foreground mt-1">{helpText}</p>
+            )}
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -191,12 +218,19 @@ const LoginCard: React.FC<LoginCardProps> = ({
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Sign in'}
+            {isLoading ? (
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Logging in...
+              </span>
+            ) : (
+              'Sign in'
+            )}
           </Button>
           {userType === 'company' && (
             <div className="text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary hover:text-primary/80">
+              <Link to="/register" className="text-primary hover:text-primary/80">
                 Register now
               </Link>
             </div>

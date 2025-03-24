@@ -11,7 +11,8 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  Briefcase
+  Briefcase,
+  UserPlus
 } from 'lucide-react';
 
 const CompanyLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -25,6 +26,7 @@ const CompanyLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { icon: Home, label: 'Dashboard', path: '/company/dashboard' },
     { icon: Building2, label: 'Branches', path: '/company/branches' },
     { icon: Users, label: 'Employees', path: '/company/employees' },
+    { icon: UserPlus, label: 'Create Employee', path: '/company/create-employee' },
     { icon: CheckSquare, label: 'Tasks', path: '/company/tasks' },
     { icon: FileText, label: 'Reports', path: '/company/reports' },
     { icon: Briefcase, label: 'Job Board', path: '/company/jobs' },

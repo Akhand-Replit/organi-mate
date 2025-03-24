@@ -17,9 +17,11 @@ import Unauthorized from "./pages/Unauthorized";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
+import CreateCompany from "./pages/admin/CreateCompany";
 
 // Company pages
 import CompanyDashboard from "./pages/company/Dashboard";
+import CreateEmployee from "./pages/company/CreateEmployee";
 
 // Branch pages
 import BranchDashboard from "./pages/branch/Dashboard";
@@ -53,6 +55,14 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/admin/create-company" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <CreateCompany />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Company routes */}
             <Route 
@@ -63,12 +73,20 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/company/create-employee" 
+              element={
+                <ProtectedRoute allowedRoles={['company']}>
+                  <CreateEmployee />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Branch routes */}
             <Route 
               path="/branch/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['branch_manager']}>
+                <ProtectedRoute allowedRoles={['branch_manager', 'assistant_manager']}>
                   <BranchDashboard />
                 </ProtectedRoute>
               } 

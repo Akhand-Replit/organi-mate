@@ -8,9 +8,24 @@ export interface UserData extends User {
   role?: UserRole;
   company_id?: string;
   branch_id?: string;
+  name?: string;
+}
+
+export interface CreateUserData {
+  email: string;
+  password: string;
+  name: string;
+  role: UserRole;
+  company_id?: string;
+  branch_id?: string;
 }
 
 export async function signIn(email: string, password: string) {
+  // Special case for admin static credentials
+  if (email.toLowerCase() === 'admin' && password === 'ADMINPASSWORD') {
+    email = 'admin@system.com';
+  }
+  
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -20,13 +35,50 @@ export async function signIn(email: string, password: string) {
   return data;
 }
 
-export async function signUp(email: string, password: string, userData: any) {
+export async function signUp(userData: CreateUserData) {
+  const { email, password, name, role, company_id, branch_id } = userData;
+  
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: userData,
+      data: {
+        name,
+        role,
+        company_id,
+        branch_id
+      },
     },
+  });
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function createUser(userData: CreateUserData, adminKey?: string) {
+  // This is used by admins and companies to create users
+  const { email, password, name, role, company_id, branch_id } = userData;
+  
+  const { data, error } = await supabase.functions.invoke('create-user', {
+    body: {
+      email,
+      password,
+      userData: {
+        name,
+        role,
+        company_id,
+        branch_id
+      }
+    }
+  });
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePassword(currentPassword: string, newPassword: string) {
+  const { data, error } = await supabase.auth.updateUser({
+    password: newPassword
   });
   
   if (error) throw error;
@@ -40,6 +92,26 @@ export async function signOut() {
 
 export async function getCurrentUser(): Promise<UserData | null> {
   const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    // Get profile data to include role, company_id, etc.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    
+    if (profile) {
+      return {
+        ...user,
+        role: profile.role,
+        company_id: profile.company_id,
+        branch_id: profile.branch_id,
+        name: profile.name
+      };
+    }
+  }
+  
   return user as UserData | null;
 }
 
