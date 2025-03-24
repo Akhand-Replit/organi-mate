@@ -49,14 +49,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       try {
         setLoading(true);
 
-        // Fetch messages between the two users using SQL filter
-        const { data, error } = await messagesTable.select()
+        // Fetch messages sent by current user to the conversation user
+        const { data: sentMessages, error: sentError } = await messagesTable.select()
           .eq('sender_id', userId)
           .eq('receiver_id', conversationUser.id)
           .order('created_at');
 
-        if (error) throw error;
+        if (sentError) throw sentError;
 
+        // Fetch messages received by current user from the conversation user
         const { data: receivedMessages, error: receivedError } = await messagesTable.select()
           .eq('sender_id', conversationUser.id)
           .eq('receiver_id', userId)
@@ -65,7 +66,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (receivedError) throw receivedError;
         
         // Combine and sort messages
-        const allMessages = [...(data || []), ...(receivedMessages || [])].sort(
+        const allMessages = [...(sentMessages || []), ...(receivedMessages || [])].sort(
           (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         
@@ -216,6 +217,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="border-t p-4">
         <ChatInput 
           onSendMessage={handleSendMessage}
+          isLoading={loading}
           disabled={sending}
           sending={sending}
         />
