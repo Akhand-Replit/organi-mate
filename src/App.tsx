@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import CompanyApplication from "./pages/CompanyApplication";
 import Jobs from "./pages/Jobs";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 
@@ -48,6 +49,16 @@ const App = () => (
             <Route path="/company-application" element={<CompanyApplication />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+
+            {/* Protected routes - accessible by any authenticated user */}
+            <Route 
+              path="/messages" 
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'company', 'branch_manager', 'assistant_manager', 'employee', 'job_seeker']}>
+                  <Messages />
+                </ProtectedRoute>
+              } 
+            />
 
             {/* Admin routes */}
             <Route 

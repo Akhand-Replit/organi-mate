@@ -1,108 +1,171 @@
-
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-const Navbar: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > 20);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+const Navbar = () => {
+  const { user, signOut } = useAuth();
+  const location = useLocation();
+
+  const getLinkClasses = (path: string) => {
+    return `block py-2 px-4 rounded hover:bg-secondary transition-colors ${location.pathname === path ? 'font-semibold' : ''}`;
+  };
+
+  const renderNavItems = () => {
+    if (!user) {
+      return (
+        <>
+          <Link to="/login" className={getLinkClasses('/login')}>
+            Login
+          </Link>
+          <Link to="/register" className={getLinkClasses('/register')}>
+            Register
+          </Link>
+        </>
+      );
+    }
+
+    // For authenticated users
+    switch (user.role) {
+      case 'admin':
+        return (
+          <>
+            <Link to="/admin/dashboard" className={getLinkClasses('/admin/dashboard')}>
+              Dashboard
+            </Link>
+            <Link to="/admin/companies" className={getLinkClasses('/admin/companies')}>
+              Companies
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
+      case 'company':
+        return (
+          <>
+            <Link to="/company/dashboard" className={getLinkClasses('/company/dashboard')}>
+              Dashboard
+            </Link>
+            <Link to="/company/create-employee" className={getLinkClasses('/company/create-employee')}>
+              Employees
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
+      case 'branch_manager':
+      case 'assistant_manager':
+        return (
+          <>
+            <Link to="/branch/dashboard" className={getLinkClasses('/branch/dashboard')}>
+              Dashboard
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
+      case 'employee':
+        return (
+          <>
+            <Link to="/employee/dashboard" className={getLinkClasses('/employee/dashboard')}>
+              Dashboard
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
+      case 'job_seeker':
+        return (
+          <>
+            <Link to="/jobs" className={getLinkClasses('/jobs')}>
+              Find Jobs
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <header 
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-4 px-6',
-        isScrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
-      )}
-    >
-      <div className="container mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-          <span className="text-xl font-bold tracking-tight">CompanyOS</span>
+    <nav className="bg-background border-b sticky top-0 z-50">
+      <div className="container max-w-screen-xl mx-auto py-4 px-6 flex items-center justify-between">
+        <Link to="/" className="text-2xl font-bold">
+          JobTrack
         </Link>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
-          <NavLinks />
-          <div className="flex items-center gap-4">
-            <Link to="/login">
-              <Button variant="ghost" className="hover:bg-secondary">Log in</Button>
-            </Link>
-            <Link to="/signup">
-              <Button>Get Started</Button>
-            </Link>
-          </div>
-        </nav>
-        
-        {/* Mobile Menu Trigger */}
-        <button 
-          className="md:hidden text-foreground p-2"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-background/95 backdrop-blur-md border-b border-border animate-fade-in">
-          <div className="container mx-auto py-4 px-6 flex flex-col gap-4">
-            <NavLinks mobile />
-            <div className="flex flex-col gap-3 mt-4">
-              <Link to="/login">
-                <Button variant="ghost" className="w-full justify-start">Log in</Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="w-full justify-start">Get Started</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-    </header>
-  );
-};
 
-interface NavLinksProps {
-  mobile?: boolean;
-}
-
-const NavLinks: React.FC<NavLinksProps> = ({ mobile }) => {
-  const links = [
-    { name: 'Features', href: '/features' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'About', href: '/about' },
-    { name: 'Contact', href: '/contact' },
-  ];
-  
-  return (
-    <div className={cn(
-      mobile ? 'flex flex-col gap-4' : 'flex items-center gap-8'
-    )}>
-      {links.map((link) => (
-        <Link 
-          key={link.name} 
-          to={link.href} 
-          className={cn(
-            'link-underline font-medium text-foreground/80 hover:text-foreground',
-            mobile && 'py-2'
+        {/* Desktop navigation */}
+        <div className="hidden md:flex items-center space-x-4">
+          {renderNavItems()}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-        >
-          {link.name}
-        </Link>
-      ))}
-    </div>
+        </div>
+
+        {/* Mobile navigation (Hamburger menu) */}
+        <div className="md:hidden">
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>
+                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {renderNavItems()}
+                <DropdownMenuItem onClick={signOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          {!user && (
+            <Link to="/login" className={getLinkClasses('/login')}>
+              Login
+            </Link>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 };
 
