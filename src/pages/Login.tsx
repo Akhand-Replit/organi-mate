@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -29,14 +28,12 @@ const Login: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       redirectBasedOnRole(user.role);
     }
   }, [user]);
 
-  // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -61,7 +58,6 @@ const Login: React.FC = () => {
     
     try {
       await signIn(email, password);
-      // Auth state change is handled by AuthProvider
       toast({
         title: "Login successful",
         description: "You have been logged in to your account.",
@@ -173,7 +169,6 @@ const LoginCard: React.FC<LoginCardProps> = ({
   staticUsername,
   staticPassword
 }) => {
-  // Set static credentials if provided
   useEffect(() => {
     if (staticUsername) {
       setEmail(staticUsername);

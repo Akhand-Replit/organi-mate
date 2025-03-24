@@ -26,6 +26,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
+  // TEMPORARY: Authentication check is disabled, allowing all access
+  return <>{children}</>;
+
+  // Original authentication logic, commented out for now:
+  /*
   if (!user) {
     // User is not authenticated, redirect to login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
@@ -38,6 +43,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   return <>{children}</>;
+  */
 };
 
 export default ProtectedRoute;

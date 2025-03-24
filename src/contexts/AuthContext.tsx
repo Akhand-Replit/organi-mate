@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { getCurrentUser, UserData } from '@/lib/auth';
+import { getCurrentUser, UserData, getSession } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 
@@ -25,24 +25,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // First set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          const userData = await getCurrentUser();
-          setUser(userData);
-        } else {
-          setUser(null);
+        // Skip processing if this is a mock admin session
+        if (session?.user?.id !== 'admin-user-id') {
+          setSession(session);
+          
+          if (session?.user) {
+            const userData = await getCurrentUser();
+            setUser(userData);
+          } else {
+            setUser(null);
+          }
         }
         
         setLoading(false);
       }
     );
 
-    // Then check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Then check for existing session, including the mock admin
+    getSession().then(session => {
       setSession(session);
       
-      if (session?.user) {
+      if (session) {
         getCurrentUser().then(userData => {
           setUser(userData);
           setLoading(false);
@@ -59,6 +62,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
+      // Check if it's the admin user
+      if (user?.id === 'admin-user-id') {
+        // Clear the mock admin session
+        localStorage.removeItem('supabase.auth.token');
+        setUser(null);
+        setSession(null);
+        navigate('/login');
+        toast({
+          title: "Signed out successfully",
+          description: "You have been signed out of your account.",
+        });
+        return;
+      }
+
+      // Regular sign out for other users
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);

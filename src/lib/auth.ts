@@ -20,20 +20,44 @@ export interface CreateUserData {
   branch_id?: string;
 }
 
+// Static admin credentials - stored directly in code as requested
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'admin123'; // Not hashed as per request
+
 export async function signIn(email: string, password: string) {
   // Special case for admin static credentials
-  if (email.toLowerCase() === 'admin') {
-    // When "admin" is provided, use the correct email in the database
-    const { data, error } = await supabase.auth.signInWithPassword({
+  if (email.toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    // Create a mock admin session
+    const mockAdminUser: UserData = {
+      id: 'admin-user-id',
       email: 'admin@system.com',
-      password,
-    });
+      role: 'admin',
+      name: 'System Administrator',
+      // Add other required User properties with mock values
+      app_metadata: {},
+      user_metadata: {
+        role: 'admin',
+        name: 'System Administrator'
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString()
+    };
     
-    if (error) throw error;
-    return data;
+    // Return a mock session object
+    return {
+      user: mockAdminUser,
+      session: {
+        access_token: 'mock-admin-token',
+        refresh_token: 'mock-admin-refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: mockAdminUser
+      }
+    };
   }
   
-  // Regular sign in
+  // Regular sign in for other users
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -99,6 +123,19 @@ export async function signOut() {
 }
 
 export async function getCurrentUser(): Promise<UserData | null> {
+  // Check for mock admin session in localStorage
+  const sessionStr = localStorage.getItem('supabase.auth.token');
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session?.user?.id === 'admin-user-id') {
+        return session.user as UserData;
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+  }
+
   const { data: { user } } = await supabase.auth.getUser();
   
   if (user) {
@@ -124,6 +161,19 @@ export async function getCurrentUser(): Promise<UserData | null> {
 }
 
 export async function getSession(): Promise<Session | null> {
+  // Check for mock admin session in localStorage
+  const sessionStr = localStorage.getItem('supabase.auth.token');
+  if (sessionStr) {
+    try {
+      const session = JSON.parse(sessionStr);
+      if (session?.user?.id === 'admin-user-id') {
+        return session as Session;
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+  }
+  
   const { data: { session } } = await supabase.auth.getSession();
   return session;
 }
