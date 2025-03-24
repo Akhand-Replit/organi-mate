@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, User, Building2, Briefcase } from 'lucide-react';
-import { signUp } from '@/lib/auth';
+import { signUp, CreateUserData } from '@/lib/auth';
 
 const Register: React.FC = () => {
   const [userType, setUserType] = useState<string>('job_seeker');
@@ -45,12 +45,14 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const userData = {
+      const userData: CreateUserData = {
+        email,
+        password,
         name: userType === 'job_seeker' ? name : companyName,
-        role: userType,
+        role: userType as any,
       };
       
-      await signUp(email, password, userData);
+      await signUp(userData);
       
       toast({
         title: "Registration successful",
