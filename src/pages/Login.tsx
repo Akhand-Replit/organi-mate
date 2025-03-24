@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,7 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import Layout from '@/components/layout/Layout';
 import { useToast } from '@/hooks/use-toast';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Loader2 } from 'lucide-react';
+import { signIn } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login: React.FC = () => {
   const [userType, setUserType] = useState<string>('company');
@@ -23,6 +25,17 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const from = (location.state as any)?.from || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -34,18 +47,13 @@ const Login: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Show success toast
+      await signIn(email, password);
+      // Auth state change is handled by AuthProvider
+      // No need to manually redirect here
+    } catch (error: any) {
       toast({
-        title: "Login attempted",
-        description: `Logging in as ${userType} is not implemented yet.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
+        title: "Login failed",
+        description: error.message || "Invalid credentials. Please try again.",
         variant: "destructive",
       });
     } finally {
