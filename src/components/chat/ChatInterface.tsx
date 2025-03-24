@@ -83,13 +83,13 @@ const ChatInterface: React.FC = () => {
       const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`) as { data: Message[] | null, error: any };
         
       if (messagesError) throw messagesError;
       
       // Get unique user IDs from these messages
       const userIds = new Set<string>();
-      messagesData.forEach(msg => {
+      messagesData?.forEach(msg => {
         if (msg.sender_id !== user.id) userIds.add(msg.sender_id);
         if (msg.receiver_id !== user.id) userIds.add(msg.receiver_id);
       });
@@ -105,7 +105,7 @@ const ChatInterface: React.FC = () => {
       // Build conversations
       const conversationMap = new Map<string, ChatConversation>();
       
-      usersData.forEach(profile => {
+      usersData?.forEach(profile => {
         // Skip the current user
         if (profile.id === user.id) return;
         
@@ -119,15 +119,18 @@ const ChatInterface: React.FC = () => {
         };
         
         // Find messages with this user
-        const conversationMessages = messagesData.filter(
-          msg => (msg.sender_id === profile.id && msg.receiver_id === user.id) || 
-                (msg.sender_id === user.id && msg.receiver_id === profile.id)
-        ).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        const conversationMessages = messagesData
+          ?.filter(
+            msg => (msg.sender_id === profile.id && msg.receiver_id === user.id) || 
+                  (msg.sender_id === user.id && msg.receiver_id === profile.id)
+          )
+          .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) || [];
         
         // Count unread messages
-        const unreadCount = messagesData.filter(
-          msg => msg.sender_id === profile.id && msg.receiver_id === user.id && !msg.read
-        ).length;
+        const unreadCount = messagesData
+          ?.filter(
+            msg => msg.sender_id === profile.id && msg.receiver_id === user.id && !msg.read
+          ).length || 0;
         
         if (conversationMessages.length > 0) {
           conversationMap.set(profile.id, {
@@ -169,7 +172,7 @@ const ChatInterface: React.FC = () => {
         .from('messages')
         .select('*')
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true }) as { data: Message[] | null, error: any };
         
       if (error) throw error;
       
@@ -206,7 +209,7 @@ const ChatInterface: React.FC = () => {
       await supabase
         .from('messages')
         .update({ read: true })
-        .eq('id', messageId);
+        .eq('id', messageId) as { data: any, error: any };
     } catch (error) {
       console.error("Error marking message as read:", error);
     }
@@ -231,12 +234,14 @@ const ChatInterface: React.FC = () => {
         .from('messages')
         .insert(message)
         .select()
-        .single();
+        .single() as { data: Message | null, error: any };
         
       if (error) throw error;
       
-      setMessages(prev => [...prev, data]);
-      fetchConversations(); // Update last message in conversation list
+      if (data) {
+        setMessages(prev => [...prev, data]);
+        fetchConversations(); // Update last message in conversation list
+      }
       
     } catch (error) {
       console.error("Error sending message:", error);
