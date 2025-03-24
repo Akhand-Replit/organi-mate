@@ -83,6 +83,42 @@ export type Database = {
         }
         Relationships: []
       }
+      company_applications: {
+        Row: {
+          address: string | null
+          company_name: string
+          created_at: string
+          description: string | null
+          email: string
+          id: string
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name: string
+          created_at?: string
+          description?: string | null
+          email: string
+          id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          created_at?: string
+          description?: string | null
+          email?: string
+          id?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           branch_id: string | null
