@@ -8,11 +8,15 @@ import { format } from 'date-fns';
 
 interface ChatMessageProps {
   message: Message;
+  isOwnMessage?: boolean;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage }) => {
   const { user } = useAuth();
-  const isCurrentUser = message.sender_id === user?.id;
+  // If isOwnMessage prop is provided, use it. Otherwise, determine from user.id
+  const isSender = isOwnMessage !== undefined 
+    ? isOwnMessage 
+    : message.sender_id === user?.id;
   
   // Get initials for avatar
   const getInitials = (name: string) => {
@@ -28,7 +32,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
     <div
       className={cn(
         "flex items-start gap-2 my-2",
-        isCurrentUser ? "flex-row-reverse" : "flex-row"
+        isSender ? "flex-row-reverse" : "flex-row"
       )}
     >
       <Avatar className="h-8 w-8">
@@ -40,7 +44,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <div
         className={cn(
           "max-w-[70%] px-4 py-2 rounded-lg",
-          isCurrentUser 
+          isSender 
             ? "bg-primary text-primary-foreground rounded-tr-none" 
             : "bg-muted rounded-tl-none"
         )}
@@ -48,7 +52,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
         <p className="text-sm">{message.content}</p>
         <span className={cn(
           "text-xs block mt-1", 
-          isCurrentUser ? "text-primary-foreground/80" : "text-muted-foreground"
+          isSender ? "text-primary-foreground/80" : "text-muted-foreground"
         )}>
           {format(new Date(message.created_at), 'h:mm a')}
         </span>

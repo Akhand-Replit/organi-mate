@@ -48,25 +48,38 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       try {
         setLoading(true);
-        // Fetch messages where current user is either sender or receiver
+
+        // Fetch messages between the two users using SQL filter
         const { data, error } = await messagesTable.select()
-          .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-          .and(`sender_id.eq.${conversationUser.id},receiver_id.eq.${conversationUser.id}`)
-          .order('created_at', { ascending: true });
-          
+          .eq('sender_id', userId)
+          .eq('receiver_id', conversationUser.id)
+          .order('created_at');
+
         if (error) throw error;
+
+        const { data: receivedMessages, error: receivedError } = await messagesTable.select()
+          .eq('sender_id', conversationUser.id)
+          .eq('receiver_id', userId)
+          .order('created_at');
+
+        if (receivedError) throw receivedError;
         
-        setMessages(data as Message[]);
+        // Combine and sort messages
+        const allMessages = [...(data || []), ...(receivedMessages || [])].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        setMessages(allMessages as Message[]);
         
         // Mark messages as read
-        const unreadMessages = data?.filter((msg: MessageRow) => 
+        const unreadMessages = receivedMessages?.filter(msg => 
           msg.receiver_id === userId && 
           msg.sender_id === conversationUser.id && 
           !msg.read
         );
         
         if (unreadMessages && unreadMessages.length > 0) {
-          await Promise.all(unreadMessages.map((msg: MessageRow) => 
+          await Promise.all(unreadMessages.map(msg => 
             messagesTable.update({ id: msg.id, read: true })
               .eq('id', msg.id)
           ));
@@ -138,10 +151,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (error) throw error;
       
       // Add new message to the state
-      setMessages((prev) => [
-        ...prev, 
-        data[0] as Message
-      ]);
+      if (data && data[0]) {
+        setMessages((prev) => [
+          ...prev, 
+          data[0] as Message
+        ]);
+      }
       
     } catch (error: any) {
       console.error('Error sending message:', error);
