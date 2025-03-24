@@ -20,7 +20,7 @@ import { signIn } from '@/lib/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Login: React.FC = () => {
-  const [userType, setUserType] = useState<string>('company');
+  const [userType, setUserType] = useState<string>('job_seeker');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -83,10 +83,25 @@ const Login: React.FC = () => {
         <div className="w-full max-w-md animate-fade-in">
           <Tabs defaultValue={userType} onValueChange={setUserType}>
             <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="job_seeker">Job Seeker</TabsTrigger>
               <TabsTrigger value="company">Company</TabsTrigger>
-              <TabsTrigger value="employee">Employee</TabsTrigger>
               <TabsTrigger value="admin">Admin</TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="job_seeker">
+              <LoginCard 
+                title="Job Seeker Login"
+                description="Access your job applications and profile."
+                email={email}
+                setEmail={setEmail}
+                password={password}
+                setPassword={setPassword}
+                isLoading={isLoading}
+                handleSubmit={handleSubmit}
+                userType="job_seeker"
+                showRegisterLink={true}
+              />
+            </TabsContent>
             
             <TabsContent value="company">
               <LoginCard 
@@ -99,20 +114,8 @@ const Login: React.FC = () => {
                 isLoading={isLoading}
                 handleSubmit={handleSubmit}
                 userType="company"
-              />
-            </TabsContent>
-            
-            <TabsContent value="employee">
-              <LoginCard 
-                title="Employee Login"
-                description="Access your tasks, reports, and messages."
-                email={email}
-                setEmail={setEmail}
-                password={password}
-                setPassword={setPassword}
-                isLoading={isLoading}
-                handleSubmit={handleSubmit}
-                userType="employee"
+                showRegisterLink={false}
+                applicationLink="/company-application"
               />
             </TabsContent>
             
@@ -127,6 +130,9 @@ const Login: React.FC = () => {
                 isLoading={isLoading}
                 handleSubmit={handleSubmit}
                 userType="admin"
+                showRegisterLink={false}
+                staticUsername="admin"
+                staticPassword="ADMINPASSWORD"
               />
             </TabsContent>
           </Tabs>
@@ -146,6 +152,10 @@ interface LoginCardProps {
   isLoading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
   userType: string;
+  showRegisterLink?: boolean;
+  applicationLink?: string;
+  staticUsername?: string;
+  staticPassword?: string;
 }
 
 const LoginCard: React.FC<LoginCardProps> = ({
@@ -157,14 +167,25 @@ const LoginCard: React.FC<LoginCardProps> = ({
   setPassword,
   isLoading,
   handleSubmit,
-  userType
+  userType,
+  showRegisterLink = false,
+  applicationLink,
+  staticUsername,
+  staticPassword
 }) => {
-  const placeholderText = userType === 'admin' 
-    ? 'Enter admin username' 
+  // Set static credentials if provided
+  useEffect(() => {
+    if (staticUsername) {
+      setEmail(staticUsername);
+    }
+  }, [staticUsername, setEmail]);
+
+  const placeholderText = staticUsername
+    ? `Use "${staticUsername}" as username`
     : 'Enter your email or username';
   
-  const helpText = userType === 'admin' 
-    ? 'Use "admin" as username and "ADMINPASSWORD" as password' 
+  const helpText = staticUsername && staticPassword
+    ? `Use "${staticUsername}" as username and "${staticPassword}" as password` 
     : '';
 
   return (
@@ -186,6 +207,7 @@ const LoginCard: React.FC<LoginCardProps> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                readOnly={!!staticUsername}
               />
             </div>
             {helpText && (
@@ -227,11 +249,19 @@ const LoginCard: React.FC<LoginCardProps> = ({
               'Sign in'
             )}
           </Button>
-          {userType === 'company' && (
+          {showRegisterLink && (
             <div className="text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
               <Link to="/register" className="text-primary hover:text-primary/80">
                 Register now
+              </Link>
+            </div>
+          )}
+          {applicationLink && (
+            <div className="text-sm text-center text-muted-foreground">
+              Need a company account?{' '}
+              <Link to={applicationLink} className="text-primary hover:text-primary/80">
+                Apply here
               </Link>
             </div>
           )}

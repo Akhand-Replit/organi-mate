@@ -22,10 +22,18 @@ export interface CreateUserData {
 
 export async function signIn(email: string, password: string) {
   // Special case for admin static credentials
-  if (email.toLowerCase() === 'admin' && password === 'ADMINPASSWORD') {
-    email = 'admin@system.com';
+  if (email.toLowerCase() === 'admin') {
+    // When "admin" is provided, use the correct email in the database
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: 'admin@system.com',
+      password,
+    });
+    
+    if (error) throw error;
+    return data;
   }
   
+  // Regular sign in
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,

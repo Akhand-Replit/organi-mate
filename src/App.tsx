@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import CompanyApplication from "./pages/CompanyApplication";
 import Jobs from "./pages/Jobs";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/company-application" element={<CompanyApplication />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
 
