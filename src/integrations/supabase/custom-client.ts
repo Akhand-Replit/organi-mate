@@ -60,8 +60,7 @@ export const messagesTable = {
   },
   
   getConversationParticipants: (userId: string) => {
-    // Fixed: Use the direct rpc() method from supabase client
-    return supabase
-      .rpc('get_unique_conversation_participants', { user_id: userId });
+    // Use type assertion to bypass TypeScript checking for RPC function name
+    return supabase.rpc('get_unique_conversation_participants', { user_id: userId }) as any;
   }
 };
