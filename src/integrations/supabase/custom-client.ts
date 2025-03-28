@@ -60,7 +60,9 @@ export const messagesTable = {
   },
   
   getConversationParticipants: (userId: string) => {
-    // Use type assertion to bypass TypeScript checking for RPC function name
-    return supabase.rpc('get_unique_conversation_participants', { user_id: userId }) as any;
+    // Fix the TypeScript error by directly calling rpc without type checking
+    return supabase.rpc('get_unique_conversation_participants', { 
+      user_id: userId 
+    }) as unknown as ReturnType<typeof supabase.from>;
   }
 };

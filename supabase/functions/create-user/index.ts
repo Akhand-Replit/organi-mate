@@ -29,72 +29,7 @@ serve(async (req) => {
 
     console.log("Supabase client created");
 
-    // Get the authorization header from the request
-    const authorizationHeader = req.headers.get('Authorization')?.split(' ')[1];
-    
-    if (!authorizationHeader) {
-      console.log("Missing authorization header");
-      return new Response(
-        JSON.stringify({ error: "Missing authorization header" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("Getting user from auth header");
-    // Get the user from the auth header
-    const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser(authorizationHeader);
-
-    if (authError) {
-      console.log("Auth error:", authError);
-    }
-
-    if (!authUser) {
-      console.log("No user found");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("Getting user profile");
-    // Get the user's role from profiles
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('role, company_id')
-      .eq('id', authUser.id)
-      .single();
-
-    if (profileError) {
-      console.log("Profile error:", profileError);
-      return new Response(
-        JSON.stringify({ error: "Failed to get user profile: " + profileError.message }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    if (!profile) {
-      console.log("No profile found");
-      return new Response(
-        JSON.stringify({ error: "User profile not found" }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    console.log("User role:", profile.role);
-
-    // Parse the request body
+    // Parse the request body first
     const requestData = await req.json();
     const { email, password, userData } = requestData;
 
@@ -104,7 +39,7 @@ serve(async (req) => {
     });
 
     // Validate request body
-    if (!email || !password || !userData.name || !userData.role) {
+    if (!email || !password || !userData || !userData.name || !userData.role) {
       console.log("Missing required fields");
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -115,46 +50,132 @@ serve(async (req) => {
       );
     }
 
-    // Check if the user has permission to create users with the requested role
-    if (profile.role === 'admin') {
-      // Admin can only create company users
-      if (userData.role !== 'company') {
-        console.log("Admin can only create company users");
-        return new Response(
-          JSON.stringify({ error: "Admin can only create company users" }),
-          {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-    } else if (profile.role === 'company') {
-      // Company can only create employee users for their own company
-      const allowedRoles = ['branch_manager', 'assistant_manager', 'employee'];
-      
-      if (!allowedRoles.includes(userData.role)) {
-        console.log("Company can only create employee-type users");
-        return new Response(
-          JSON.stringify({ error: "Company can only create employee-type users" }),
-          {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-      
-      // Set company_id to the creator's company_id
-      userData.company_id = profile.company_id;
-    } else {
-      // Other roles cannot create users
-      console.log("User does not have permission to create users");
+    // Get the authorization header from the request
+    const authorizationHeader = req.headers.get('Authorization')?.split(' ')[1];
+    
+    // Check if we're creating a company through the public application form
+    // In this case, we won't have a valid auth token
+    const isPublicCompanyCreation = userData.role === 'company' && !authorizationHeader;
+    
+    if (!authorizationHeader && !isPublicCompanyCreation) {
+      console.log("Missing authorization header");
       return new Response(
-        JSON.stringify({ error: "You do not have permission to create users" }),
+        JSON.stringify({ error: "Missing authorization header" }),
         {
-          status: 403,
+          status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    let authUser = null;
+    let profile = null;
+
+    // Only verify auth for non-public company creation
+    if (!isPublicCompanyCreation) {
+      console.log("Getting user from auth header");
+      // Get the user from the auth header
+      const { data: authData, error: authError } = await supabaseClient.auth.getUser(authorizationHeader);
+
+      if (authError) {
+        console.log("Auth error:", authError);
+        return new Response(
+          JSON.stringify({ error: authError.message }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      authUser = authData?.user;
+
+      if (!authUser) {
+        console.log("No user found");
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log("Getting user profile");
+      // Get the user's role from profiles
+      const { data: profileData, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('role, company_id')
+        .eq('id', authUser.id)
+        .single();
+
+      if (profileError) {
+        console.log("Profile error:", profileError);
+        return new Response(
+          JSON.stringify({ error: "Failed to get user profile: " + profileError.message }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      profile = profileData;
+
+      if (!profile) {
+        console.log("No profile found");
+        return new Response(
+          JSON.stringify({ error: "User profile not found" }),
+          {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      console.log("User role:", profile.role);
+
+      // Check if the user has permission to create users with the requested role
+      if (profile.role === 'admin') {
+        // Admin can only create company users
+        if (userData.role !== 'company') {
+          console.log("Admin can only create company users");
+          return new Response(
+            JSON.stringify({ error: "Admin can only create company users" }),
+            {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+      } else if (profile.role === 'company') {
+        // Company can only create employee users for their own company
+        const allowedRoles = ['branch_manager', 'assistant_manager', 'employee'];
+        
+        if (!allowedRoles.includes(userData.role)) {
+          console.log("Company can only create employee-type users");
+          return new Response(
+            JSON.stringify({ error: "Company can only create employee-type users" }),
+            {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+        
+        // Set company_id to the creator's company_id
+        userData.company_id = profile.company_id;
+      } else {
+        // Other roles cannot create users
+        console.log("User does not have permission to create users");
+        return new Response(
+          JSON.stringify({ error: "You do not have permission to create users" }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
     }
 
     console.log("Creating user with role:", userData.role);
