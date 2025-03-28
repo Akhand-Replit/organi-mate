@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { 
   Card, 
   CardContent, 
@@ -13,6 +14,7 @@ import { UserPlus } from 'lucide-react';
 import { createUser } from '@/lib/auth';
 import { UserRole } from '@/lib/auth';
 import CompanyForm from '@/components/admin/CompanyForm';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,11 +53,18 @@ const CreateCompany = () => {
       
     } catch (error: any) {
       console.error("Error creating company:", error);
-      setError(error.message || "There was a problem creating the company.");
+      let errorMessage = error.message || "There was a problem creating the company.";
+      
+      // Format Edge Function errors
+      if (errorMessage.includes("Edge Function returned a non-2xx status code")) {
+        errorMessage = "Server error: Failed to create company. Please try again later.";
+      }
+      
+      setError(errorMessage);
       
       toast({
         title: "Error creating company",
-        description: error.message || "There was a problem creating the company.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -87,10 +96,10 @@ const CreateCompany = () => {
             />
             
             {error && (
-              <div className="mt-4 p-3 bg-destructive/15 text-destructive rounded-md text-sm">
-                <p className="font-semibold">Error creating company:</p>
-                <p>{error}</p>
-              </div>
+              <Alert variant="destructive" className="mt-4">
+                <AlertTitle>Error creating company</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>

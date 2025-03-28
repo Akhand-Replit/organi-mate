@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -42,17 +43,22 @@ export async function signIn(email: string, password: string) {
       created_at: new Date().toISOString()
     };
     
+    // Store mock admin session in localStorage to persist it
+    const mockSession = {
+      access_token: 'mock-admin-token',
+      refresh_token: 'mock-admin-refresh-token',
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      token_type: 'bearer',
+      user: mockAdminUser
+    };
+    
+    localStorage.setItem('supabase.auth.token', JSON.stringify(mockSession));
+    
     // Return a mock session object
     return {
       user: mockAdminUser,
-      session: {
-        access_token: 'mock-admin-token',
-        refresh_token: 'mock-admin-refresh-token',
-        expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-        token_type: 'bearer',
-        user: mockAdminUser
-      }
+      session: mockSession
     };
   }
   
@@ -86,7 +92,7 @@ export async function signUp(userData: CreateUserData) {
   return data;
 }
 
-export async function createUser(userData: CreateUserData, adminKey?: string) {
+export async function createUser(userData: CreateUserData) {
   // This is used by admins and companies to create users
   const { email, password, name, role, company_id, branch_id } = userData;
   
@@ -99,6 +105,23 @@ export async function createUser(userData: CreateUserData, adminKey?: string) {
       branch_id
     });
     
+    // Get current session
+    const session = await getSession();
+    let headers: Record<string, string> = {};
+    
+    // For static admin (which has no actual JWT token)
+    if (session?.user.id === 'admin-user-id') {
+      headers = {
+        'X-Admin-Auth': 'static-admin-token'
+      };
+    } 
+    // For normal authenticated users with valid tokens
+    else if (session?.access_token) {
+      headers = {
+        'Authorization': `Bearer ${session.access_token}`
+      };
+    }
+    
     const { data, error } = await supabase.functions.invoke('create-user', {
       body: {
         email,
@@ -109,7 +132,8 @@ export async function createUser(userData: CreateUserData, adminKey?: string) {
           company_id,
           branch_id
         }
-      }
+      },
+      headers
     });
     
     if (error) {
@@ -138,6 +162,7 @@ export async function updatePassword(currentPassword: string, newPassword: strin
 }
 
 export async function signOut() {
+  localStorage.removeItem('supabase.auth.token');
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

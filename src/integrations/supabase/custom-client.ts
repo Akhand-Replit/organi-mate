@@ -18,6 +18,16 @@ export const messagesTable = {
       .order('created_at', { ascending: true });
   },
   
+  selectLatestByParticipants: (userId1: string, userId2: string) => {
+    return supabase
+      .from('messages')
+      .select()
+      .or(`sender_id.eq.${userId1},receiver_id.eq.${userId1}`)
+      .or(`sender_id.eq.${userId2},receiver_id.eq.${userId2}`)
+      .order('created_at', { ascending: false })
+      .limit(1);
+  },
+  
   insert: (data: MessageInsert) => {
     return supabase.from('messages').insert(data);
   },
@@ -47,5 +57,10 @@ export const messagesTable = {
       .select('*', { count: 'exact' })
       .eq('receiver_id', userId)
       .eq('read', false);
+  },
+  
+  getConversationParticipants: (userId: string) => {
+    return supabase
+      .rpc('get_unique_conversation_participants', { user_id: userId });
   }
 };
