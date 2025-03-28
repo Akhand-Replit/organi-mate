@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import {
@@ -117,7 +116,7 @@ const AdminReports: React.FC = () => {
       .from('jobs')
       .select('category, is_active');
       
-    if (jobsError) throw jobsError; // Fixed the typo here
+    if (jobsError) throw jobsError;
     
     const categoryCount = jobs.reduce((acc: any, job) => {
       const category = job.category;

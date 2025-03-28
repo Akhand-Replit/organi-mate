@@ -60,10 +60,8 @@ export const messagesTable = {
   },
   
   getConversationParticipants: (userId: string) => {
-    // Fixed: Use the from().rpc() pattern instead of direct rpc() call
+    // Fixed: Use the direct rpc() method from supabase client
     return supabase
-      .from('rpc')
-      .select('*')
       .rpc('get_unique_conversation_participants', { user_id: userId });
   }
 };
