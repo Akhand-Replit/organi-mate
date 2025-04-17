@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -75,21 +74,38 @@ export async function signIn(email: string, password: string) {
 export async function signUp(userData: CreateUserData) {
   const { email, password, name, role, company_id, branch_id } = userData;
   
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role,
-        company_id,
-        branch_id
-      },
-    },
-  });
+  console.log("signUp function called with role:", role);
   
-  if (error) throw error;
-  return data;
+  // For job seekers, handle the signup directly with Supabase
+  if (role === 'job_seeker') {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role,
+            name,
+            company_id,
+            branch_id
+          }
+        }
+      });
+      
+      if (error) {
+        console.error("Supabase signup error:", error);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in signUp:", error);
+      throw error;
+    }
+  } else {
+    // For company and other roles, use the create-user function
+    return createUser(userData);
+  }
 }
 
 export async function createUser(userData: CreateUserData) {

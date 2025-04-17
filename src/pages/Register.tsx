@@ -42,6 +42,8 @@ const Register: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log("Creating user with role: job_seeker");
+      
       const userData: CreateUserData = {
         email,
         password,
@@ -49,7 +51,8 @@ const Register: React.FC = () => {
         role: 'job_seeker',
       };
       
-      await signUp(userData);
+      const result = await signUp(userData);
+      console.log("Sign up result:", result);
       
       toast({
         title: "Registration successful",
@@ -58,6 +61,8 @@ const Register: React.FC = () => {
       
       navigate('/login');
     } catch (error: any) {
+      console.error("Registration error:", error);
+      
       toast({
         title: "Registration failed",
         description: error.message || "There was a problem with your registration.",
