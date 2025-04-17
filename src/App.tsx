@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -55,140 +56,27 @@ const App = () => (
             <Route path="/unauthorized" element={<Unauthorized />} />
 
             {/* Protected routes - accessible by any authenticated user */}
-            <Route 
-              path="/messages" 
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'company', 'branch_manager', 'assistant_manager', 'employee', 'job_seeker']}>
-                  <Messages />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/messages" element={<Messages />} />
 
             {/* Admin routes */}
-            <Route 
-              path="/admin/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Admin routes */}
-            <Route 
-              path="/admin/companies" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Companies />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/create-company" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <CreateCompany />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/messages" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminMessages />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/users" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminUsers />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/subscriptions" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminSubscriptions />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/reports" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminReports />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/jobs" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminJobs />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/settings" 
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AdminSettings />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/companies" element={<Companies />} />
+            <Route path="/admin/create-company" element={<CreateCompany />} />
+            <Route path="/admin/messages" element={<AdminMessages />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/jobs" element={<AdminJobs />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
 
-            {/* Company routes - accessible by company, branch_manager and assistant_manager roles */}
-            <Route 
-              path="/company/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
-                  <CompanyDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Create employee route - accessible by company, branch_manager and assistant_manager roles */}
-            <Route 
-              path="/company/create-employee" 
-              element={
-                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
-                  <CreateEmployee />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Branches management - only accessible by company role */}
-            <Route 
-              path="/company/branches" 
-              element={
-                <ProtectedRoute allowedRoles={['company']}>
-                  <Branches />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Employee management - accessible by company and branch_manager roles */}
-            <Route 
-              path="/company/employees" 
-              element={
-                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
-                  <Employees />
-                </ProtectedRoute>
-              } 
-            />
+            {/* Company routes */}
+            <Route path="/company/dashboard" element={<CompanyDashboard />} />
+            <Route path="/company/create-employee" element={<CreateEmployee />} />
+            <Route path="/company/branches" element={<Branches />} />
+            <Route path="/company/employees" element={<Employees />} />
 
             {/* Employee routes */}
-            <Route 
-              path="/employee/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['employee']}>
-                  <EmployeeDashboard />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

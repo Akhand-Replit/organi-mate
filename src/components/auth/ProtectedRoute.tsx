@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   allowedRoles = [] 
 }) => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -26,17 +26,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (!user) {
-    // User is not authenticated, redirect to login
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
-  // If allowedRoles is empty, allow any authenticated user
-  if (allowedRoles.length > 0 && user.role && !allowedRoles.includes(user.role)) {
-    // User doesn't have the required role
-    return <Navigate to="/unauthorized" replace />;
-  }
-
+  // Temporarily bypass all authentication and role checks
   return <>{children}</>;
 };
 
