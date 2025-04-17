@@ -36,6 +36,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
+  // If user is a branch_manager or assistant_manager, redirect to company dashboard
+  if (user.role === 'branch_manager' || user.role === 'assistant_manager') {
+    if (location.pathname.startsWith('/branch/')) {
+      return <Navigate to="/company/dashboard" replace />;
+    }
+  }
+
   // If allowedRoles is empty, allow any authenticated user
   if (allowedRoles.length > 0 && user.role && !allowedRoles.includes(user.role)) {
     // User doesn't have the required role

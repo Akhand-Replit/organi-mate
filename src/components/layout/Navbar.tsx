@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -56,7 +57,7 @@ const Navbar = () => {
             <Link to="/company/dashboard" className={getLinkClasses('/company/dashboard')}>
               Dashboard
             </Link>
-            <Link to="/company/create-employee" className={getLinkClasses('/company/create-employee')}>
+            <Link to="/company/employees" className={getLinkClasses('/company/employees')}>
               Employees
             </Link>
             <Link to="/messages" className={getLinkClasses('/messages')}>
@@ -68,7 +69,7 @@ const Navbar = () => {
       case 'assistant_manager':
         return (
           <>
-            <Link to="/branch/dashboard" className={getLinkClasses('/branch/dashboard')}>
+            <Link to="/company/dashboard" className={getLinkClasses('/company/dashboard')}>
               Dashboard
             </Link>
             <Link to="/messages" className={getLinkClasses('/messages')}>

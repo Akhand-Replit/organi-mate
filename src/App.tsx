@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,9 +32,6 @@ import CompanyDashboard from "./pages/company/Dashboard";
 import CreateEmployee from "./pages/company/CreateEmployee";
 import Branches from "./pages/company/Branches";
 import Employees from "./pages/company/Employees";
-
-// Branch pages
-import BranchDashboard from "./pages/branch/Dashboard";
 
 // Employee pages
 import EmployeeDashboard from "./pages/employee/Dashboard";
@@ -172,16 +168,6 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['company']}>
                   <Employees />
-                </ProtectedRoute>
-              } 
-            />
-
-            {/* Branch routes */}
-            <Route 
-              path="/branch/dashboard" 
-              element={
-                <ProtectedRoute allowedRoles={['branch_manager', 'assistant_manager']}>
-                  <BranchDashboard />
                 </ProtectedRoute>
               } 
             />
