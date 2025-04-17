@@ -37,6 +37,13 @@ import Employees from "./pages/company/Employees";
 // Employee pages
 import EmployeeDashboard from "./pages/employee/Dashboard";
 
+// Branch Manager pages
+import BranchDashboard from "./pages/branch/Dashboard";
+import BranchEmployees from "./pages/branch/Employees";
+import BranchTasks from "./pages/branch/Tasks";
+import BranchReports from "./pages/branch/Reports";
+import BranchMessages from "./pages/branch/Messages";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -74,6 +81,13 @@ const App = () => (
             <Route path="/company/create-employee" element={<CreateEmployee />} />
             <Route path="/company/branches" element={<Branches />} />
             <Route path="/company/employees" element={<Employees />} />
+
+            {/* Branch Manager routes */}
+            <Route path="/branch/dashboard" element={<BranchDashboard />} />
+            <Route path="/branch/employees" element={<BranchEmployees />} />
+            <Route path="/branch/tasks" element={<BranchTasks />} />
+            <Route path="/branch/reports" element={<BranchReports />} />
+            <Route path="/branch/messages" element={<BranchMessages />} />
 
             {/* Employee routes */}
             <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
