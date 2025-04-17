@@ -31,6 +31,8 @@ import AdminSettings from "./pages/admin/Settings";
 // Company pages
 import CompanyDashboard from "./pages/company/Dashboard";
 import CreateEmployee from "./pages/company/CreateEmployee";
+import Branches from "./pages/company/Branches";
+import Employees from "./pages/company/Employees";
 
 // Branch pages
 import BranchDashboard from "./pages/branch/Dashboard";
@@ -154,6 +156,22 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={['company']}>
                   <CreateEmployee />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/company/branches" 
+              element={
+                <ProtectedRoute allowedRoles={['company']}>
+                  <Branches />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/company/employees" 
+              element={
+                <ProtectedRoute allowedRoles={['company']}>
+                  <Employees />
                 </ProtectedRoute>
               } 
             />
