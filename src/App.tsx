@@ -73,6 +73,8 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Admin routes */}
             <Route 
               path="/admin/companies" 
               element={
@@ -138,23 +140,27 @@ const App = () => (
               } 
             />
 
-            {/* Company routes */}
+            {/* Company routes - accessible by company, branch_manager and assistant_manager roles */}
             <Route 
               path="/company/dashboard" 
               element={
-                <ProtectedRoute allowedRoles={['company']}>
+                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
                   <CompanyDashboard />
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Create employee route - accessible by company, branch_manager and assistant_manager roles */}
             <Route 
               path="/company/create-employee" 
               element={
-                <ProtectedRoute allowedRoles={['company']}>
+                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
                   <CreateEmployee />
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Branches management - only accessible by company role */}
             <Route 
               path="/company/branches" 
               element={
@@ -163,10 +169,12 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            
+            {/* Employee management - accessible by company and branch_manager roles */}
             <Route 
               path="/company/employees" 
               element={
-                <ProtectedRoute allowedRoles={['company']}>
+                <ProtectedRoute allowedRoles={['company', 'branch_manager', 'assistant_manager']}>
                   <Employees />
                 </ProtectedRoute>
               } 

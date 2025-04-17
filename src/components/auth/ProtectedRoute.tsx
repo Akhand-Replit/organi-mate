@@ -26,20 +26,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // TEMPORARY: Authentication check is disabled, allowing all access
-  return <>{children}</>;
-
-  // Original authentication logic, commented out for now:
-  /*
   if (!user) {
     // User is not authenticated, redirect to login
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
-  // If user is a branch_manager or assistant_manager, redirect to company dashboard
+  // Role-specific routing rules
   if (user.role === 'branch_manager' || user.role === 'assistant_manager') {
+    // Redirect branch managers and assistant managers to company dashboard if trying to access branch pages
     if (location.pathname.startsWith('/branch/')) {
       return <Navigate to="/company/dashboard" replace />;
+    }
+    
+    // Branch managers and assistant managers should not access admin routes
+    if (location.pathname.startsWith('/admin/')) {
+      return <Navigate to="/unauthorized" replace />;
+    }
+  }
+  
+  // Employee-specific restrictions
+  if (user.role === 'employee') {
+    // Employees should not access admin or company management routes
+    if (location.pathname.startsWith('/admin/') || 
+        location.pathname.startsWith('/company/') && 
+        !location.pathname.includes('/company/dashboard')) {
+      return <Navigate to="/unauthorized" replace />;
     }
   }
 
@@ -50,7 +61,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   return <>{children}</>;
-  */
 };
 
 export default ProtectedRoute;

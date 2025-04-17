@@ -60,17 +60,36 @@ const Navbar = () => {
             <Link to="/company/employees" className={getLinkClasses('/company/employees')}>
               Employees
             </Link>
+            <Link to="/company/branches" className={getLinkClasses('/company/branches')}>
+              Branches
+            </Link>
             <Link to="/messages" className={getLinkClasses('/messages')}>
               Messages
             </Link>
           </>
         );
       case 'branch_manager':
+        return (
+          <>
+            <Link to="/company/dashboard" className={getLinkClasses('/company/dashboard')}>
+              Dashboard
+            </Link>
+            <Link to="/company/employees" className={getLinkClasses('/company/employees')}>
+              Employees
+            </Link>
+            <Link to="/messages" className={getLinkClasses('/messages')}>
+              Messages
+            </Link>
+          </>
+        );
       case 'assistant_manager':
         return (
           <>
             <Link to="/company/dashboard" className={getLinkClasses('/company/dashboard')}>
               Dashboard
+            </Link>
+            <Link to="/company/employees" className={getLinkClasses('/company/employees')}>
+              Employees
             </Link>
             <Link to="/messages" className={getLinkClasses('/messages')}>
               Messages
