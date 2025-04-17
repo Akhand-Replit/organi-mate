@@ -5,13 +5,13 @@ import DashboardLayout from './DashboardLayout';
 import { Button } from '@/components/ui/button';
 import {
   Home,
-  CheckSquare,
-  FileText,
+  Briefcase,
+  ClipboardList,
   MessageSquare,
   User
 } from 'lucide-react';
 
-const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const JobSeekerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -19,17 +19,17 @@ const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
   };
   
   const navItems = [
-    { icon: Home, label: 'Dashboard', path: '/employee/dashboard' },
-    { icon: CheckSquare, label: 'Tasks', path: '/employee/tasks' },
-    { icon: FileText, label: 'Reports', path: '/employee/reports' },
-    { icon: MessageSquare, label: 'Messages', path: '/employee/messages' },
-    { icon: User, label: 'Profile', path: '/employee/profile' },
+    { icon: Home, label: 'Dashboard', path: '/jobseeker/dashboard' },
+    { icon: Briefcase, label: 'Browse Jobs', path: '/jobseeker/jobs' },
+    { icon: ClipboardList, label: 'My Applications', path: '/jobseeker/applications' },
+    { icon: MessageSquare, label: 'Messages', path: '/jobseeker/messages' },
+    { icon: User, label: 'Profile', path: '/jobseeker/profile' },
   ];
   
   const sidebarContent = (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold px-2 mb-3">Employee Portal</h2>
+        <h2 className="text-lg font-semibold px-2 mb-3">Job Seeker</h2>
         {navItems.map((item) => (
           <Link to={item.path} key={item.path}>
             <Button
@@ -52,4 +52,4 @@ const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
-export default EmployeeLayout;
+export default JobSeekerLayout;

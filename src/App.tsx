@@ -36,13 +36,35 @@ import Employees from "./pages/company/Employees";
 
 // Employee pages
 import EmployeeDashboard from "./pages/employee/Dashboard";
+import EmployeeReports from "./pages/employee/Reports";
+import EmployeeMessages from "./pages/employee/Messages";
+import EmployeeTasks from "./pages/employee/Tasks";
+import EmployeeProfile from "./pages/employee/Profile";
 
 // Branch Manager pages
 import BranchDashboard from "./pages/branch/Dashboard";
 import BranchEmployees from "./pages/branch/Employees";
+import BranchCreateEmployee from "./pages/branch/CreateEmployee";
 import BranchTasks from "./pages/branch/Tasks";
 import BranchReports from "./pages/branch/Reports";
 import BranchMessages from "./pages/branch/Messages";
+import BranchSettings from "./pages/branch/Settings";
+
+// Assistant Manager pages
+import AssistantDashboard from "./pages/assistant/Dashboard";
+import AssistantEmployees from "./pages/assistant/Employees";
+import AssistantCreateEmployee from "./pages/assistant/CreateEmployee";
+import AssistantTasks from "./pages/assistant/Tasks";
+import AssistantReports from "./pages/assistant/Reports";
+import AssistantMessages from "./pages/assistant/Messages";
+import AssistantProfile from "./pages/assistant/Profile";
+
+// Job Seeker pages
+import JobSeekerDashboard from "./pages/jobseeker/Dashboard";
+import JobSeekerJobs from "./pages/jobseeker/Jobs";
+import JobSeekerApplications from "./pages/jobseeker/Applications";
+import JobSeekerProfile from "./pages/jobseeker/Profile";
+import JobSeekerMessages from "./pages/jobseeker/Messages";
 
 const queryClient = new QueryClient();
 
@@ -85,12 +107,34 @@ const App = () => (
             {/* Branch Manager routes */}
             <Route path="/branch/dashboard" element={<BranchDashboard />} />
             <Route path="/branch/employees" element={<BranchEmployees />} />
+            <Route path="/branch/create-employee" element={<BranchCreateEmployee />} />
             <Route path="/branch/tasks" element={<BranchTasks />} />
             <Route path="/branch/reports" element={<BranchReports />} />
             <Route path="/branch/messages" element={<BranchMessages />} />
+            <Route path="/branch/settings" element={<BranchSettings />} />
+
+            {/* Assistant Manager routes */}
+            <Route path="/assistant/dashboard" element={<AssistantDashboard />} />
+            <Route path="/assistant/employees" element={<AssistantEmployees />} />
+            <Route path="/assistant/create-employee" element={<AssistantCreateEmployee />} />
+            <Route path="/assistant/tasks" element={<AssistantTasks />} />
+            <Route path="/assistant/reports" element={<AssistantReports />} />
+            <Route path="/assistant/messages" element={<AssistantMessages />} />
+            <Route path="/assistant/profile" element={<AssistantProfile />} />
 
             {/* Employee routes */}
             <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+            <Route path="/employee/reports" element={<EmployeeReports />} />
+            <Route path="/employee/messages" element={<EmployeeMessages />} />
+            <Route path="/employee/tasks" element={<EmployeeTasks />} />
+            <Route path="/employee/profile" element={<EmployeeProfile />} />
+
+            {/* Job Seeker routes */}
+            <Route path="/jobseeker/dashboard" element={<JobSeekerDashboard />} />
+            <Route path="/jobseeker/jobs" element={<JobSeekerJobs />} />
+            <Route path="/jobseeker/applications" element={<JobSeekerApplications />} />
+            <Route path="/jobseeker/profile" element={<JobSeekerProfile />} />
+            <Route path="/jobseeker/messages" element={<JobSeekerMessages />} />
 
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />

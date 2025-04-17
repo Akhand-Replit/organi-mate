@@ -5,13 +5,16 @@ import DashboardLayout from './DashboardLayout';
 import { Button } from '@/components/ui/button';
 import {
   Home,
+  Users,
   CheckSquare,
   FileText,
   MessageSquare,
+  Settings,
+  UserPlus,
   User
 } from 'lucide-react';
 
-const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AssistantLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -19,17 +22,19 @@ const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
   };
   
   const navItems = [
-    { icon: Home, label: 'Dashboard', path: '/employee/dashboard' },
-    { icon: CheckSquare, label: 'Tasks', path: '/employee/tasks' },
-    { icon: FileText, label: 'Reports', path: '/employee/reports' },
-    { icon: MessageSquare, label: 'Messages', path: '/employee/messages' },
-    { icon: User, label: 'Profile', path: '/employee/profile' },
+    { icon: Home, label: 'Dashboard', path: '/assistant/dashboard' },
+    { icon: Users, label: 'Employees', path: '/assistant/employees' },
+    { icon: UserPlus, label: 'Create Employee', path: '/assistant/create-employee' },
+    { icon: CheckSquare, label: 'Tasks', path: '/assistant/tasks' },
+    { icon: FileText, label: 'Reports', path: '/assistant/reports' },
+    { icon: MessageSquare, label: 'Messages', path: '/assistant/messages' },
+    { icon: User, label: 'Profile', path: '/assistant/profile' },
   ];
   
   const sidebarContent = (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold px-2 mb-3">Employee Portal</h2>
+        <h2 className="text-lg font-semibold px-2 mb-3">Assistant Manager</h2>
         {navItems.map((item) => (
           <Link to={item.path} key={item.path}>
             <Button
@@ -52,4 +57,4 @@ const EmployeeLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
-export default EmployeeLayout;
+export default AssistantLayout;
