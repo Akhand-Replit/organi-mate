@@ -176,9 +176,13 @@ export type Database = {
           cover_letter: string | null
           created_at: string
           id: string
+          interview_date: string | null
           job_id: string
+          notes: string | null
           resume_url: string | null
           status: string
+          status_updated_at: string | null
+          status_updated_by: string | null
           updated_at: string
         }
         Insert: {
@@ -186,9 +190,13 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           id?: string
+          interview_date?: string | null
           job_id: string
+          notes?: string | null
           resume_url?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -196,9 +204,13 @@ export type Database = {
           cover_letter?: string | null
           created_at?: string
           id?: string
+          interview_date?: string | null
           job_id?: string
+          notes?: string | null
           resume_url?: string | null
           status?: string
+          status_updated_at?: string | null
+          status_updated_by?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -211,49 +223,79 @@ export type Database = {
           },
         ]
       }
+      job_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
+          benefits: string[] | null
           category: string
           company: string
           company_id: string | null
           created_at: string
           description: string
+          employment_type: string
+          experience_level: string | null
           id: string
           is_active: boolean
           job_type: string
           location: string
           requirements: string
           salary_range: string | null
+          skills: string[] | null
           title: string
           updated_at: string
         }
         Insert: {
+          benefits?: string[] | null
           category: string
           company: string
           company_id?: string | null
           created_at?: string
           description: string
+          employment_type?: string
+          experience_level?: string | null
           id?: string
           is_active?: boolean
           job_type: string
           location: string
           requirements: string
           salary_range?: string | null
+          skills?: string[] | null
           title: string
           updated_at?: string
         }
         Update: {
+          benefits?: string[] | null
           category?: string
           company?: string
           company_id?: string | null
           created_at?: string
           description?: string
+          employment_type?: string
+          experience_level?: string | null
           id?: string
           is_active?: boolean
           job_type?: string
           location?: string
           requirements?: string
           salary_range?: string | null
+          skills?: string[] | null
           title?: string
           updated_at?: string
         }
@@ -341,6 +383,123 @@ export type Database = {
           },
           {
             foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          branch_id: string | null
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          report_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          report_type: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          report_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          assigned_by: string | null
+          assigned_to: string | null
+          branch_id: string | null
+          company_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          is_active: boolean | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assigned_to?: string | null
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
