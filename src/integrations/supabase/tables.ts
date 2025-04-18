@@ -1,6 +1,16 @@
 
 import { supabase } from './client';
-import type { Task, Report, JobCategory } from '@/lib/supabase-types';
+import type { 
+  Task, 
+  Report, 
+  JobCategory, 
+  Job, 
+  JobInsert,
+  JobUpdate,
+  JobApplication,
+  JobApplicationInsert,
+  JobApplicationUpdate
+} from '@/lib/supabase-types';
 
 // Tasks
 export const tasksTable = {
@@ -39,7 +49,7 @@ export const jobCategoriesTable = {
   delete: (id: string) => supabase.from('job_categories').delete().eq('id', id),
 };
 
-// Jobs table utilities with simplified types
+// Jobs table utilities with proper typing
 export const jobsTable = {
   getAll: () => supabase.from('jobs').select('*'),
   getById: (id: string) => supabase.from('jobs').select('*').eq('id', id).single(),
@@ -55,13 +65,13 @@ export const jobsTable = {
   getByExperienceLevel: (level: string) => 
     supabase.from('jobs').select('*').eq('experience_level', level),
   
-  create: (job: Record<string, any>) => supabase.from('jobs').insert(job),
+  create: (job: JobInsert) => supabase.from('jobs').insert(job),
   
-  update: (id: string, updates: Record<string, any>) => 
+  update: (id: string, updates: JobUpdate) => 
     supabase.from('jobs').update(updates).eq('id', id),
 };
 
-// Job Applications table utilities with simplified types
+// Job Applications table utilities with proper typing
 export const jobApplicationsTable = {
   getAll: () => supabase.from('job_applications').select('*'),
   getById: (id: string) => supabase.from('job_applications').select('*').eq('id', id).single(),

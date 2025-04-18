@@ -1,3 +1,4 @@
+
 // This file provides custom type definitions for Supabase tables that 
 // don't appear in the auto-generated types.
 // Use this for tables created after the initial setup or for local development.
@@ -83,3 +84,48 @@ export type JobCategory = {
   name: string;
   created_at: string;
 };
+
+// Job type definition
+export type Job = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  requirements: string;
+  job_type: string;
+  category: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  company_id?: string | null;
+  salary_range?: string | null;
+  employment_type?: string;
+  experience_level?: string | null;
+  skills?: string[] | null;
+  benefits?: string[] | null;
+};
+
+// JobApplication type definition
+export type JobApplication = {
+  id: string;
+  job_id: string;
+  applicant_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  status_updated_at?: string | null;
+  status_updated_by?: string | null;
+  interview_date?: string | null;
+  notes?: string | null;
+  resume_url?: string | null;
+  cover_letter?: string | null;
+};
+
+// Types for inserting data
+export type JobInsert = Omit<Job, 'id' | 'created_at' | 'updated_at'>;
+export type JobApplicationInsert = Omit<JobApplication, 'id' | 'created_at' | 'updated_at'>;
+
+// Types for updating data
+export type JobUpdate = Partial<Omit<Job, 'id' | 'created_at' | 'updated_at'>>;
+export type JobApplicationUpdate = Partial<Omit<JobApplication, 'id' | 'created_at' | 'updated_at'>>;
