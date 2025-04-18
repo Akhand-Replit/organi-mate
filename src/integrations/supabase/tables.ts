@@ -56,19 +56,26 @@ export const jobsTable = {
   getByCompany: (companyId: string) => supabase.from('jobs').select('*').eq('company_id', companyId),
   search: (query: string) => supabase.from('jobs').select('*').ilike('title', `%${query}%`),
   
-  getByCategory: (categoryId: string) => 
-    supabase.from('jobs').select('*').eq('category_id', categoryId),
+  // Use type annotation to avoid excessive type inference
+  getByCategory: (categoryId: string) => {
+    return supabase.from('jobs').select('*').eq('category', categoryId);
+  },
   
-  getByEmploymentType: (type: string) => 
-    supabase.from('jobs').select('*').eq('employment_type', type),
+  getByEmploymentType: (type: string) => {
+    return supabase.from('jobs').select('*').eq('employment_type', type);
+  },
   
-  getByExperienceLevel: (level: string) => 
-    supabase.from('jobs').select('*').eq('experience_level', level),
+  getByExperienceLevel: (level: string) => {
+    return supabase.from('jobs').select('*').eq('experience_level', level);
+  },
   
-  create: (job: JobInsert) => supabase.from('jobs').insert(job),
+  create: (job: JobInsert) => {
+    return supabase.from('jobs').insert(job);
+  },
   
-  update: (id: string, updates: JobUpdate) => 
-    supabase.from('jobs').update(updates).eq('id', id),
+  update: (id: string, updates: JobUpdate) => {
+    return supabase.from('jobs').update(updates).eq('id', id);
+  },
 };
 
 // Job Applications table utilities with proper typing
@@ -78,20 +85,23 @@ export const jobApplicationsTable = {
   getByJob: (jobId: string) => supabase.from('job_applications').select('*').eq('job_id', jobId),
   getByApplicant: (applicantId: string) => supabase.from('job_applications').select('*').eq('applicant_id', applicantId),
   
-  updateStatus: (id: string, status: string, updatedBy: string) => 
-    supabase.from('job_applications').update({
+  updateStatus: (id: string, status: string, updatedBy: string) => {
+    return supabase.from('job_applications').update({
       status,
       status_updated_at: new Date().toISOString(),
       status_updated_by: updatedBy
-    }).eq('id', id),
+    }).eq('id', id);
+  },
   
-  setInterview: (id: string, interviewDate: string) => 
-    supabase.from('job_applications').update({
+  setInterview: (id: string, interviewDate: string) => {
+    return supabase.from('job_applications').update({
       interview_date: interviewDate
-    }).eq('id', id),
+    }).eq('id', id);
+  },
   
-  addNotes: (id: string, notes: string) => 
-    supabase.from('job_applications').update({
+  addNotes: (id: string, notes: string) => {
+    return supabase.from('job_applications').update({
       notes
-    }).eq('id', id),
+    }).eq('id', id);
+  },
 };
