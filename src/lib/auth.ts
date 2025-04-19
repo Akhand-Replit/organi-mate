@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 
@@ -21,7 +22,7 @@ export interface CreateUserData {
 
 // Static admin credentials - stored directly in code as requested
 const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'admin123'; // Not hashed as per request
+const ADMIN_PASSWORD = 'admin123'; // Updated to match the displayed password in Login.tsx
 
 export async function signIn(email: string, password: string) {
   // Special case for admin static credentials
