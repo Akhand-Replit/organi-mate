@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { ProfileRow, ProfileUpdate } from '@/lib/supabase-types';
 import {
   Card,
   CardContent,
@@ -54,16 +55,19 @@ const AssistantProfile: React.FC = () => {
           .single();
 
         if (error) throw error;
+        
+        // Cast data to ProfileRow type
+        const profileData = data as ProfileRow;
 
         setFormData({
-          name: data.name || '',
+          name: profileData.name || '',
           email: user.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          company: user.company_id || '', // Assuming we can get company info from user
-          branch: user.branch_id || '', // Assuming we can get branch info from user
-          role: user.role || '',
-          department: data.department || ''
+          phone: profileData.phone || '',
+          address: profileData.address || '',
+          company: profileData.company_id || '', // Assuming we can get company info from user
+          branch: profileData.branch_id || '', // Assuming we can get branch info from user
+          role: profileData.role || '',
+          department: profileData.department || ''
         });
       } catch (error) {
         toast({
@@ -89,14 +93,17 @@ const AssistantProfile: React.FC = () => {
     if (!user) return;
 
     try {
+      // Create update object typed as ProfileUpdate
+      const updateData: ProfileUpdate = {
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        department: formData.department
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: formData.name,
-          phone: formData.phone,
-          address: formData.address,
-          department: formData.department
-        })
+        .update(updateData)
         .eq('id', user.id);
 
       if (error) throw error;

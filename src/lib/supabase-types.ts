@@ -1,4 +1,3 @@
-
 // This file provides custom type definitions for Supabase tables that 
 // don't appear in the auto-generated types.
 // Use this for tables created after the initial setup or for local development.
@@ -41,6 +40,50 @@ export interface CustomDatabase extends Database {
           receiver_name?: string | null;
         };
       };
+      profiles: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          name: string | null;
+          role: string;
+          company_id: string | null;
+          branch_id: string | null;
+          avatar_url: string | null;
+          phone: string | null;
+          address: string | null;
+          department: string | null;
+          email: string | null;
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          name?: string | null;
+          role: string;
+          company_id?: string | null;
+          branch_id?: string | null;
+          avatar_url?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          department?: string | null;
+          email?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          name?: string | null;
+          role?: string;
+          company_id?: string | null;
+          branch_id?: string | null;
+          avatar_url?: string | null;
+          phone?: string | null;
+          address?: string | null;
+          department?: string | null;
+          email?: string | null;
+        };
+      };
     };
   };
 }
@@ -49,6 +92,10 @@ export interface CustomDatabase extends Database {
 export type MessageRow = CustomDatabase["public"]["Tables"]["messages"]["Row"];
 export type MessageInsert = CustomDatabase["public"]["Tables"]["messages"]["Insert"];
 export type MessageUpdate = CustomDatabase["public"]["Tables"]["messages"]["Update"];
+
+export type ProfileRow = CustomDatabase["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = CustomDatabase["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = CustomDatabase["public"]["Tables"]["profiles"]["Update"];
 
 export type Task = {
   id: string;
