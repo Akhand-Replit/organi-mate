@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import AssistantLayout from '@/components/layout/AssistantLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,19 +27,55 @@ import {
 } from 'lucide-react';
 
 const AssistantProfile: React.FC = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock user data
   const [formData, setFormData] = useState({
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@example.com',
-    phone: '555-123-4567',
-    address: '123 Main St, Anytown, USA',
-    company: 'ABC Corporation',
-    branch: 'Downtown Branch',
-    role: 'Assistant Manager',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    company: '',
+    branch: '',
+    role: '',
+    department: ''
   });
+  
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        setFormData({
+          name: data.name || '',
+          email: user.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          company: user.company_id || '', // Assuming we can get company info from user
+          branch: user.branch_id || '', // Assuming we can get branch info from user
+          role: user.role || '',
+          department: data.department || ''
+        });
+      } catch (error) {
+        toast({
+          title: "Error fetching profile",
+          description: "Could not retrieve profile information.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchProfileData();
+  }, [user, toast]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,15 +85,40 @@ const AssistantProfile: React.FC = () => {
     }));
   };
   
-  const handleSave = () => {
-    // In a real app, this would save to the backend
-    setIsEditing(false);
-    
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated successfully.",
-    });
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: formData.name,
+          phone: formData.phone,
+          address: formData.address,
+          department: formData.department
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setIsEditing(false);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error updating profile",
+        description: "Could not update profile information.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <AssistantLayout>
@@ -83,19 +146,6 @@ const AssistantProfile: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-full md:w-1/3 flex justify-center">
-                  <div className="relative">
-                    <div className="h-32 w-32 bg-primary/20 rounded-full flex items-center justify-center">
-                      <UserIcon className="h-12 w-12 text-primary" />
-                    </div>
-                    {isEditing && (
-                      <Button variant="secondary" size="sm" className="absolute bottom-0 right-0">
-                        Change
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                
                 <div className="w-full md:w-2/3 space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
