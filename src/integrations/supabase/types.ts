@@ -512,6 +512,46 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_branch_by_id: {
+        Args: { branch_id_param: string }
+        Returns: {
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }[]
+      }
+      get_company_by_id: {
+        Args: { company_id_param: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_active: boolean
+          max_branches: number
+          max_employees: number
+          name: string
+          subscription_end_date: string | null
+          subscription_plan: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_employee_by_user_id: {
+        Args: { user_id_param: string }
+        Returns: {
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean

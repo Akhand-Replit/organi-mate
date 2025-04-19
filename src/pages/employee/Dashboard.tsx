@@ -8,30 +8,66 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { FileText, CheckSquare, MessageSquare, Clock } from 'lucide-react';
 import { Loader2 } from 'lucide-react';
+import { messagesTable } from '@/integrations/supabase/custom-client';
+import { tasksTable } from '@/integrations/supabase/tables';
 
 const EmployeeDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [hoursWorked, setHoursWorked] = useState(32); // Mock data for now
 
   useEffect(() => {
     const getEmployeeProfile = async () => {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
-          .from('employees')
-          .select(`
-            *,
-            companies:company_id(*),
-            branches:branch_id(*)
-          `)
-          .eq('user_id', user.id)
-          .single();
+        // Use the security definer function to avoid infinite recursion
+        const { data, error } = await supabase.rpc('get_employee_by_user_id', {
+          user_id_param: user.id
+        });
         
         if (error) throw error;
-        setProfile(data);
+        
+        if (data && data.length > 0) {
+          const employeeData = data[0];
+          
+          // Get company data using security definer function
+          const { data: companyData, error: companyError } = await supabase.rpc(
+            'get_company_by_id',
+            { company_id_param: employeeData.company_id }
+          );
+          
+          if (companyError) throw companyError;
+          
+          // Get branch data if branch_id exists
+          let branchData = null;
+          if (employeeData.branch_id) {
+            const { data: branchResult, error: branchError } = await supabase.rpc(
+              'get_branch_by_id',
+              { branch_id_param: employeeData.branch_id }
+            );
+            
+            if (branchError) throw branchError;
+            branchData = branchResult && branchResult.length > 0 ? branchResult[0] : null;
+          }
+          
+          // Combine all data
+          setProfile({
+            ...employeeData,
+            companies: companyData && companyData.length > 0 ? companyData[0] : null,
+            branches: branchData
+          });
+          
+          // Load employee tasks
+          loadTasks(employeeData.id);
+          // Load employee messages
+          loadMessages(user.id);
+        }
       } catch (error: any) {
         console.error('Error fetching employee profile:', error);
         toast({
@@ -47,6 +83,43 @@ const EmployeeDashboard = () => {
     getEmployeeProfile();
   }, [user, toast]);
 
+  const loadTasks = async (employeeId: string) => {
+    try {
+      const { data, error } = await tasksTable.getByAssignee(employeeId);
+      
+      if (error) throw error;
+      
+      setTasks(data || []);
+    } catch (error: any) {
+      console.error('Error loading tasks:', error);
+    }
+  };
+
+  const loadMessages = async (userId: string) => {
+    try {
+      // Get unread count
+      const { data: unreadData, error: unreadError } = await messagesTable.getUnreadCount(userId);
+      
+      if (unreadError) throw unreadError;
+      
+      setUnreadCount(unreadData?.length || 0);
+      
+      // Get recent messages
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('receiver_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      if (error) throw error;
+      
+      setMessages(data || []);
+    } catch (error: any) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
   if (loading) {
     return (
       <EmployeeLayout>
@@ -57,6 +130,9 @@ const EmployeeDashboard = () => {
       </EmployeeLayout>
     );
   }
+
+  const pendingTasksCount = tasks.filter(task => task.status === 'pending' || task.status === 'in-progress').length;
+  const reportsCount = 1; // Mock data - can be updated with actual reports count
 
   return (
     <EmployeeLayout>
@@ -80,7 +156,7 @@ const EmployeeDashboard = () => {
               <CheckSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{pendingTasksCount}</div>
               <p className="text-xs text-muted-foreground">
                 Tasks awaiting completion
               </p>
@@ -93,7 +169,7 @@ const EmployeeDashboard = () => {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1</div>
+              <div className="text-2xl font-bold">{reportsCount}</div>
               <p className="text-xs text-muted-foreground">
                 Reports pending submission
               </p>
@@ -106,7 +182,7 @@ const EmployeeDashboard = () => {
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold">{unreadCount}</div>
               <p className="text-xs text-muted-foreground">
                 Unread messages
               </p>
@@ -119,7 +195,7 @@ const EmployeeDashboard = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">32h</div>
+              <div className="text-2xl font-bold">{hoursWorked}h</div>
               <p className="text-xs text-muted-foreground">
                 Hours worked this week
               </p>
@@ -135,24 +211,34 @@ const EmployeeDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">Complete Weekly Report</h3>
-                      <p className="text-sm text-muted-foreground">Due tomorrow</p>
+                {tasks.length > 0 ? (
+                  tasks.slice(0, 2).map((task) => (
+                    <div key={task.id} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">{task.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                          </p>
+                        </div>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          task.status === 'completed' 
+                            ? 'bg-green-100 text-green-800' 
+                            : task.status === 'in-progress' 
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {task.status === 'in-progress' ? 'In Progress' : 
+                           task.status === 'completed' ? 'Completed' : 'Pending'}
+                        </span>
+                      </div>
                     </div>
-                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">In Progress</span>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No tasks assigned yet
                   </div>
-                </div>
-                <div className="border rounded-lg p-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">Team Meeting</h3>
-                      <p className="text-sm text-muted-foreground">Today at 2 PM</p>
-                    </div>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Upcoming</span>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -164,20 +250,23 @@ const EmployeeDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="border rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="font-medium">Manager</p>
-                    <span className="text-xs text-muted-foreground">1 hour ago</span>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <div key={message.id} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="font-medium">{message.sender_name || 'User'}</p>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(message.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-sm">{message.content}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No messages yet
                   </div>
-                  <p className="text-sm">Please review and submit your weekly report by EOD.</p>
-                </div>
-                <div className="border rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-1">
-                    <p className="font-medium">HR Department</p>
-                    <span className="text-xs text-muted-foreground">Yesterday</span>
-                  </div>
-                  <p className="text-sm">New company policy update available in the documents section.</p>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
