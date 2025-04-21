@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,119 +27,142 @@ const AdminMessages: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { user } = useAuth();
   const { toast } = useToast();
+  const realtimeChannel = useRef<any>(null);
+
+  const fetchConversations = async () => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+
+      const { data: companies, error: companiesError } = await supabase
+        .from('companies')
+        .select('id, name, user_id')
+        .order('name');
+
+      if (companiesError) throw companiesError;
+
+      const conversationsData: ChatConversation[] = await Promise.all(
+        companies.map(async (company) => {
+          const { data: lastMessages, error: msgError } = await supabase
+            .from('messages')
+            .select('*')
+            .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+            .or(`sender_id.eq.${company.user_id},receiver_id.eq.${company.user_id}`)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          const { count: unreadCount, error: countError } = await supabase
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('sender_id', company.user_id)
+            .eq('receiver_id', user.id)
+            .eq('read', false);
+
+          if (msgError) {
+            console.error('Error fetching last message:', msgError);
+            return null;
+          }
+          if (countError) {
+            console.error('Error fetching unread count:', countError);
+            return null;
+          }
+
+          let profileName = company.name;
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', company.user_id)
+            .maybeSingle();
+          if (profile && profile.name) profileName = profile.name;
+
+          return {
+            user: {
+              id: company.user_id,
+              name: profileName,
+              email: '',
+              company_id: company.id
+            } as User,
+            lastMessage: lastMessages && lastMessages.length > 0 ? lastMessages[0] as Message : undefined,
+            unreadCount: unreadCount || 0
+          } as ChatConversation;
+        })
+      );
+
+      const validConversations = conversationsData.filter(Boolean) as ChatConversation[];
+      validConversations.sort((a, b) => {
+        if (b.unreadCount !== a.unreadCount) return b.unreadCount - a.unreadCount;
+        if (a.lastMessage && b.lastMessage) {
+          return new Date(b.lastMessage.created_at).getTime() -
+                 new Date(a.lastMessage.created_at).getTime();
+        }
+        return a.user.name.localeCompare(b.user.name);
+      });
+
+      setConversations(validConversations);
+    } catch (error: any) {
+      console.error('Error fetching companies/conversations:', error);
+      toast({
+        title: 'Error loading messages',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCompanies = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        
-        const { data: companies, error } = await supabase
-          .from('companies')
-          .select('id, name, user_id')
-          .order('name');
-          
-        if (error) throw error;
-        
-        if (companies) {
-          const conversationsWithUnread = await Promise.all(companies.map(async (company) => {
-            const { data: messages, error: msgError } = await supabase
-              .from('messages')
-              .select('*')
-              .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-              .or(`sender_id.eq.${company.user_id},receiver_id.eq.${company.user_id}`)
-              .order('created_at', { ascending: false })
-              .limit(1);
-              
-            if (msgError) {
-              console.error('Error fetching messages:', msgError);
-              return null;
-            }
-            
-            const { count, error: countError } = await supabase
-              .from('messages')
-              .select('*', { count: 'exact' })
-              .eq('sender_id', company.user_id)
-              .eq('receiver_id', user.id)
-              .eq('read', false);
-              
-            if (countError) {
-              console.error('Error fetching unread count:', countError);
-              return null;
-            }
-            
-            return {
-              user: {
-                id: company.user_id,
-                name: company.name,
-                email: '',
-                company_id: company.id
-              } as User,
-              lastMessage: messages && messages.length > 0 ? messages[0] as Message : undefined,
-              unreadCount: count || 0
-            } as ChatConversation;
-          }));
-          
-          const validConversations = conversationsWithUnread.filter(c => c !== null) as ChatConversation[];
-          validConversations.sort((a, b) => {
-            if (b.unreadCount !== a.unreadCount) {
-              return b.unreadCount - a.unreadCount;
-            }
-            if (a.lastMessage && b.lastMessage) {
-              return new Date(b.lastMessage.created_at).getTime() - 
-                     new Date(a.lastMessage.created_at).getTime();
-            }
-            return a.user.name.localeCompare(b.user.name);
-          });
-          
-          setConversations(validConversations);
+    fetchConversations();
+
+    if (!user) return;
+
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current);
+    }
+
+    const channel = supabase
+      .channel('admin-messages-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // listen to INSERT/UPDATE/DELETE
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          fetchConversations();
         }
-      } catch (error: any) {
-        console.error('Error fetching companies:', error);
-        toast({
-          title: 'Error loading companies',
-          description: error.message,
-          variant: 'destructive'
-        });
-      } finally {
-        setIsLoading(false);
+      )
+      .subscribe();
+
+    realtimeChannel.current = channel;
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current);
       }
     };
-    
-    fetchCompanies();
-  }, [user, toast]);
-  
+  }, [user]);
+
   const handleSelectUser = (user: User) => {
     setSelectedUser({
       id: user.id,
       name: user.name || user.email || 'Unknown User'
     });
   };
-  
+
   const handleBack = () => {
     setSelectedUser(null);
-    if (user) {
-      setIsLoading(true);
-      supabase
-        .from('companies')
-        .select('id, name, user_id')
-        .order('name')
-        .then(({ data, error }) => {
-          if (!error && data) {
-            setIsLoading(false);
-          }
-        });
-    }
   };
-  
+
   const filteredConversations = searchQuery
-    ? conversations.filter(c => 
+    ? conversations.filter(c =>
         c.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (c.lastMessage?.content || '').toLowerCase().includes(searchQuery.toLowerCase())
       )
     : conversations;
-  
+
   return (
     <AdminLayout>
       <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)]">
@@ -155,7 +178,7 @@ const AdminMessages: React.FC = () => {
             <p className="text-sm text-muted-foreground mt-1">
               Communicate with companies
             </p>
-            
+
             <div className="relative mt-4">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -166,7 +189,7 @@ const AdminMessages: React.FC = () => {
               />
             </div>
           </div>
-          
+
           <div className="overflow-y-auto h-[calc(100vh-12rem)]">
             {isLoading ? (
               <div className="flex justify-center items-center h-32">
@@ -188,7 +211,7 @@ const AdminMessages: React.FC = () => {
             )}
           </div>
         </div>
-        
+
         <div className="flex-1">
           {user && (
             <ChatInterface 
