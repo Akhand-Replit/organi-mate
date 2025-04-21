@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,18 +51,18 @@ const CompanyApplications: React.FC = () => {
   const [selectedApplication, setSelectedApplication] = useState<CompanyApplication | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const { data: applications, isLoading, isError } = useQuery({
+  const { data: applications, isLoading, isError, error } = useQuery({
     queryKey: ['company-applications'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_applications')
         .select('*')
         .order('created_at', { ascending: false });
-        
       if (error) {
+        console.error("Supabase SELECT error:", error);
         throw new Error(error.message);
       }
-      
+      console.log("Fetched applications:", data);
       return data as CompanyApplication[];
     }
   });
@@ -203,7 +202,8 @@ const CompanyApplications: React.FC = () => {
               <div className="text-center py-4">Loading applications...</div>
             ) : isError ? (
               <div className="text-center py-4 text-red-500">
-                Error loading applications. Please try again.
+                Error loading applications. Please try again.<br />
+                <span className="text-xs">{error?.message}</span>
               </div>
             ) : (
               <Table>
@@ -265,7 +265,12 @@ const CompanyApplications: React.FC = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-6">
-                        No company applications found.
+                        <div>
+                          No company applications found.<br />
+                          <span className="text-xs text-muted-foreground">
+                            If you recently submitted an application and it is not visible, ensure that you are logged in as an admin and that new applications are being submitted to Supabase.
+                          </span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
