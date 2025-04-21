@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import EmployeeLayout from '@/components/layout/EmployeeLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { ProfileRow, ProfileUpdate } from '@/lib/supabase-types';
 import {
   Card,
   CardContent,
@@ -25,10 +28,10 @@ import {
 } from 'lucide-react';
 
 const EmployeeProfile: React.FC = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Removed mock user data
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -40,6 +43,70 @@ const EmployeeProfile: React.FC = () => {
     department: ''
   });
   
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        
+        // Get company and branch data if available
+        let companyName = '';
+        let branchName = '';
+        
+        if (data.company_id) {
+          const { data: companyData } = await supabase
+            .from('companies')
+            .select('name')
+            .eq('id', data.company_id)
+            .single();
+          
+          if (companyData) {
+            companyName = companyData.name;
+          }
+        }
+        
+        if (data.branch_id) {
+          const { data: branchData } = await supabase
+            .from('branches')
+            .select('name')
+            .eq('id', data.branch_id)
+            .single();
+          
+          if (branchData) {
+            branchName = branchData.name;
+          }
+        }
+
+        setFormData({
+          name: data.name || '',
+          email: user.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          company: companyName,
+          branch: branchName,
+          role: data.role || '',
+          department: data.department || ''
+        });
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        toast({
+          title: "Error fetching profile",
+          description: "Could not retrieve profile information.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    fetchProfileData();
+  }, [user, toast]);
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -48,13 +115,49 @@ const EmployeeProfile: React.FC = () => {
     }));
   };
   
-  const handleSave = () => {
-    setIsEditing(false);
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been updated successfully.",
-    });
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      const updateData: ProfileUpdate = {
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        department: formData.department
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      setIsEditing(false);
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error updating profile",
+        description: "Could not update profile information.",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (!user) {
+    return (
+      <EmployeeLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </EmployeeLayout>
+    );
+  }
 
   return (
     <EmployeeLayout>
@@ -218,8 +321,9 @@ const EmployeeProfile: React.FC = () => {
                         id="department"
                         name="department"
                         value={formData.department}
-                        readOnly
-                        className="pl-10 bg-muted"
+                        onChange={handleChange}
+                        className="pl-10"
+                        readOnly={!isEditing}
                       />
                     </div>
                   </div>

@@ -139,7 +139,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
-                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -147,6 +147,9 @@ const Navbar = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">Profile</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={signOut}>
                   Sign Out
                 </DropdownMenuItem>
@@ -163,7 +166,7 @@ const Navbar = () => {
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>
-                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase()}
+                      {user.name?.split(" ").map((n) => n[0]).join("").toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -171,6 +174,9 @@ const Navbar = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/profile">Profile</Link>
+                </DropdownMenuItem>
                 {renderNavItems()}
                 <DropdownMenuItem onClick={signOut}>
                   Sign Out

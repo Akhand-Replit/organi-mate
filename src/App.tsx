@@ -15,6 +15,7 @@ import Jobs from "./pages/Jobs";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import Profile from "./pages/Profile"; // Add the new Profile page
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -87,6 +88,7 @@ const App = () => (
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/profile" element={<Profile />} /> {/* Add the new profile route */}
 
           {/* Protected routes - accessible by any authenticated user */}
           <Route path="/messages" element={<Messages />} />
