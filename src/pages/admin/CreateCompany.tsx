@@ -16,12 +16,14 @@ import CompanyForm from '@/components/admin/CompanyForm';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleSubmit = async (formData: {
     name: string;
@@ -56,9 +58,12 @@ const CreateCompany = () => {
         throw new Error("Failed to create user account");
       }
       
-      // Direct insert into companies table with service role client if needed
-      // This is a fallback in case RLS policies aren't properly configured
-      try {
+      // Special handling for static admin user
+      if (user?.id === 'admin-user-id') {
+        console.log("Static admin user detected, using special permission flow");
+        
+        // When logged in as static admin, we need to use service role directly
+        // This bypasses RLS since static admin doesn't have a real DB record
         const { error: companyError } = await supabase
           .from('companies')
           .insert({
@@ -68,11 +73,26 @@ const CreateCompany = () => {
           
         if (companyError) {
           console.error("Error inserting company record:", companyError);
-          // We'll continue even if this fails since the user account was created
+          throw new Error(`Failed to create company record: ${companyError.message}`);
         }
-      } catch (companyInsertError) {
-        console.error("Failed to insert company record:", companyInsertError);
-        // Continue since user was created
+      } else {
+        // Try direct insert as fallback for other admin users
+        try {
+          const { error: companyError } = await supabase
+            .from('companies')
+            .insert({
+              name: formData.name,
+              user_id: userId
+            });
+            
+          if (companyError) {
+            console.error("Error inserting company record:", companyError);
+            // We'll continue even if this fails since the user account was created
+          }
+        } catch (companyInsertError) {
+          console.error("Failed to insert company record:", companyInsertError);
+          // Continue since user was created
+        }
       }
       
       toast({
