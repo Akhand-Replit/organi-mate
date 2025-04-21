@@ -30,7 +30,7 @@ export async function signIn(email: string, password: string) {
   if (email.toLowerCase() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     // Create a mock admin session
     const mockAdminUser: UserData = {
-      id: 'admin-user-id',
+      id: crypto.randomUUID(), // Generate a random UUID instead of using 'admin-user-id'
       email: 'admin@system.com',
       role: 'admin',
       name: 'System Administrator',
@@ -161,7 +161,7 @@ export async function createUser(userData: CreateUserData) {
         let headers: Record<string, string> = {};
         
         // For static admin (which has no actual JWT token)
-        if (session?.user.id === 'admin-user-id') {
+        if (session?.user.email === 'admin@system.com') {
           headers = {
             'X-Admin-Auth': 'static-admin-token'
           };
@@ -233,7 +233,7 @@ export async function createUser(userData: CreateUserData) {
       let headers: Record<string, string> = {};
       
       // For static admin (which has no actual JWT token)
-      if (session?.user.id === 'admin-user-id') {
+      if (session?.user.email === 'admin@system.com') {
         headers = {
           'X-Admin-Auth': 'static-admin-token'
         };
@@ -297,7 +297,7 @@ export async function getCurrentUser(): Promise<UserData | null> {
   if (sessionStr) {
     try {
       const session = JSON.parse(sessionStr);
-      if (session?.user?.id === 'admin-user-id') {
+      if (session?.user?.email === 'admin@system.com') {
         return session.user as UserData;
       }
     } catch (e) {
@@ -339,7 +339,7 @@ export async function getSession(): Promise<Session | null> {
   if (sessionStr) {
     try {
       const session = JSON.parse(sessionStr);
-      if (session?.user?.id === 'admin-user-id') {
+      if (session?.user?.email === 'admin@system.com') {
         return session as Session;
       }
     } catch (e) {

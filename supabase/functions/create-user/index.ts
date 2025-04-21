@@ -8,48 +8,57 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: corsHeaders,
-    });
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
   }
-
+  
   try {
-    // Create a Supabase client with the Auth context of the function
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    console.log("Supabase client created");
-
-    // Parse the request body first
+    // Get request body
     const requestData = await req.json();
     const { email, password, userData } = requestData;
-
-    console.log("Request data received:", {
-      email,
-      userData: { ...userData, password: "[REDACTED]" }
-    });
-
-    // Validate request body
-    if (!email || !password || !userData || !userData.name || !userData.role) {
-      console.log("Missing required fields");
+    
+    // Validation
+    if (!email || !password || !userData) {
+      console.log("Missing required fields:", { email: !!email, password: !!password, userData: !!userData });
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
-        {
+        { 
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
+    
+    // Extract user data
+    const { name, role, company_id, branch_id } = userData;
+    
+    // Validate role
+    const validRoles = ['admin', 'company', 'branch_manager', 'assistant_manager', 'employee', 'job_seeker'];
+    if (!role || !validRoles.includes(role)) {
+      console.log("Invalid role:", role);
+      return new Response(
+        JSON.stringify({ error: "Invalid user role" }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        }
+      );
+    }
+    
+    console.log(`Creating user with role: ${role}, name: ${name}`);
+    
+    // Initialize the Supabase client with the Deno runtime
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
     // Get the authorization header from the request
     const authorizationHeader = req.headers.get('Authorization')?.split(' ')[1];
@@ -65,13 +74,14 @@ serve(async (req) => {
       console.log("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
-        {
+        { 
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
-
+    
+    // Placeholders for user details
     let authUser = null;
     let profile = null;
 
@@ -80,125 +90,125 @@ serve(async (req) => {
       console.log("Getting user from auth header");
       // Get the user from the auth header
       const { data: authData, error: authError } = await supabaseClient.auth.getUser(authorizationHeader);
-
+      
       if (authError) {
-        console.log("Auth error:", authError);
+        console.error("Auth error:", authError);
         return new Response(
           JSON.stringify({ error: authError.message }),
-          {
+          { 
             status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
           }
         );
       }
-
-      authUser = authData?.user;
-
-      if (!authUser) {
-        console.log("No user found");
+      
+      if (!authData.user) {
+        console.log("No authenticated user found");
         return new Response(
           JSON.stringify({ error: "Unauthorized" }),
-          {
+          { 
             status: 401,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
           }
         );
       }
-
-      console.log("Getting user profile");
-      // Get the user's role from profiles
+      
+      authUser = authData.user;
+      
+      // Get the user's profile
       const { data: profileData, error: profileError } = await supabaseClient
         .from('profiles')
-        .select('role, company_id')
+        .select('*')
         .eq('id', authUser.id)
         .single();
-
-      if (profileError) {
-        console.log("Profile error:", profileError);
+        
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error("Profile error:", profileError);
         return new Response(
-          JSON.stringify({ error: "Failed to get user profile: " + profileError.message }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          JSON.stringify({ error: profileError.message }),
+          { 
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
           }
         );
       }
-
+      
       profile = profileData;
-
-      if (!profile) {
-        console.log("No profile found");
-        return new Response(
-          JSON.stringify({ error: "User profile not found" }),
-          {
-            status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      console.log("User role:", profile.role);
-
-      // Check if the user has permission to create users with the requested role
-      if (profile.role === 'admin') {
-        // Admin can only create company users
-        if (userData.role !== 'company') {
-          console.log("Admin can only create company users");
+      
+      // Check permissions based on the requester's role and the user role being created
+      // Admin can create any user type
+      // Company can create branch managers and employees for their own company
+      // Branch managers can create employees for their own branch
+      if (profile?.role === 'admin') {
+        // Admin can create any user
+        console.log("Admin user creating new user");
+      } else if (profile?.role === 'company' && ['branch_manager', 'assistant_manager', 'employee'].includes(role)) {
+        // Company can create branch managers and employees, but only for their own company
+        if (company_id && company_id !== profile.company_id) {
+          console.log("Company user trying to create user for different company");
           return new Response(
-            JSON.stringify({ error: "Admin can only create company users" }),
-            {
+            JSON.stringify({ error: "You can only create users for your own company" }),
+            { 
               status: 403,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            }
-          );
-        }
-      } else if (profile.role === 'company') {
-        // Company can only create employee users for their own company
-        const allowedRoles = ['branch_manager', 'assistant_manager', 'employee'];
-        
-        if (!allowedRoles.includes(userData.role)) {
-          console.log("Company can only create employee-type users");
-          return new Response(
-            JSON.stringify({ error: "Company can only create employee-type users" }),
-            {
-              status: 403,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
             }
           );
         }
         
-        // Set company_id to the creator's company_id
+        // Set company_id to the company user's company_id
         userData.company_id = profile.company_id;
+        
+        console.log("Company user creating new user for their company");
+      } else if (profile?.role === 'branch_manager' && role === 'employee') {
+        // Branch manager can create employees, but only for their own branch
+        if (branch_id && branch_id !== profile.branch_id) {
+          console.log("Branch manager trying to create user for different branch");
+          return new Response(
+            JSON.stringify({ error: "You can only create users for your own branch" }),
+            { 
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" }
+            }
+          );
+        }
+        
+        // Set company_id and branch_id to the branch manager's values
+        userData.company_id = profile.company_id;
+        userData.branch_id = profile.branch_id;
+        
+        console.log("Branch manager creating new employee for their branch");
+      } else if (isStaticAdminRequest) {
+        // Static admin can create any user
+        console.log("Static admin creating new user");
       } else {
-        // Other roles cannot create users
-        console.log("User does not have permission to create users");
+        console.log("Unauthorized user creation attempt", { userRole: profile?.role, creatingRole: role });
         return new Response(
-          JSON.stringify({ error: "You do not have permission to create users" }),
-          {
+          JSON.stringify({ error: "You don't have permission to create this type of user" }),
+          { 
             status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
           }
         );
       }
     }
-
-    console.log("Creating user with role:", userData.role);
     
-    // Create the user 
-    const { data: newUser, error: createError } = await supabaseClient.auth.admin.createUser({
+    // Create the new user
+    console.log("Creating new user account:", { email, role, name });
+    
+    const { data: newUser, error: userError } = await supabaseClient.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,  // No email verification needed
+      email_confirm: true,
       user_metadata: userData
     });
-
-    if (createError) {
-      console.log("Error creating user:", createError);
+    
+    if (userError) {
+      console.error("User creation error:", userError);
       return new Response(
-        JSON.stringify({ error: createError.message }),
-        {
+        JSON.stringify({ error: userError.message }),
+        { 
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
@@ -234,56 +244,106 @@ serve(async (req) => {
     // If company user is created, create a company record
     if (userData.role === 'company' && newUser.user) {
       console.log("Creating company record for:", userData.name);
+      
       const { error: companyError } = await supabaseClient
         .from('companies')
         .insert({
           name: userData.name,
           user_id: newUser.user.id
         });
-
+        
       if (companyError) {
-        console.error("Error creating company:", companyError);
-        // We don't fail the whole operation if company creation fails
+        console.error("Company creation error:", companyError);
+        
+        // Attempt to clean up the user if company creation fails
+        try {
+          await supabaseClient.auth.admin.deleteUser(newUser.user.id);
+        } catch (deleteError) {
+          console.error("Failed to clean up user after company creation error:", deleteError);
+        }
+        
+        return new Response(
+          JSON.stringify({ error: companyError.message }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
       }
     }
-
+    
     // If employee user is created, create an employee record
     if (['branch_manager', 'assistant_manager', 'employee'].includes(userData.role) && newUser.user) {
       console.log("Creating employee record for:", userData.name);
+      
+      if (!userData.company_id) {
+        console.error("Missing company_id for employee creation");
+        
+        // Attempt to clean up the user if validation fails
+        try {
+          await supabaseClient.auth.admin.deleteUser(newUser.user.id);
+        } catch (deleteError) {
+          console.error("Failed to clean up user after employee validation error:", deleteError);
+        }
+        
+        return new Response(
+          JSON.stringify({ error: "Company ID is required for employee creation" }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
+      }
+      
       const { error: employeeError } = await supabaseClient
         .from('employees')
         .insert({
           user_id: newUser.user.id,
-          name: userData.name,
           company_id: userData.company_id,
-          branch_id: userData.branch_id || null,
+          branch_id: userData.branch_id,
+          name: userData.name,
           role: userData.role
         });
-
+        
       if (employeeError) {
-        console.error("Error creating employee:", employeeError);
-        // We don't fail the whole operation if employee creation fails
+        console.error("Employee creation error:", employeeError);
+        
+        // Attempt to clean up the user if employee creation fails
+        try {
+          await supabaseClient.auth.admin.deleteUser(newUser.user.id);
+        } catch (deleteError) {
+          console.error("Failed to clean up user after employee creation error:", deleteError);
+        }
+        
+        return new Response(
+          JSON.stringify({ error: employeeError.message }),
+          { 
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          }
+        );
       }
     }
-
-    console.log("All operations completed successfully");
+    
     return new Response(
       JSON.stringify({ 
-        message: "User created successfully", 
-        user: newUser.user 
+        user: newUser.user,
+        message: "User created successfully" 
       }),
-      {
+      { 
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
+    
   } catch (error) {
-    console.error("Unexpected error:", error.message);
+    console.error("Unhandled error:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
+      JSON.stringify({ error: "Internal server error" }),
+      { 
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
   }

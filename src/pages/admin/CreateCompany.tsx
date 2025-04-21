@@ -43,7 +43,7 @@ const CreateCompany = () => {
       });
       
       // For static admin user, directly create the company
-      if (user?.id === 'admin-user-id') {
+      if (user?.email === 'admin@system.com') {
         console.log("Static admin user detected, using direct user creation");
         
         // First, create the user account
