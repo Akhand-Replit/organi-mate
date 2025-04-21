@@ -11,7 +11,8 @@ import {
   MessageSquare,
   Settings,
   Briefcase,
-  UserPlus
+  UserPlus,
+  ClipboardList
 } from 'lucide-react';
 
 const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,6 +25,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navItems = [
     { icon: Home, label: 'Dashboard', path: '/admin/dashboard' },
     { icon: Building2, label: 'Companies', path: '/admin/companies' },
+    { icon: ClipboardList, label: 'Company Applications', path: '/admin/company-applications' },
     { icon: UserPlus, label: 'Create Company', path: '/admin/create-company' },
     { icon: Users, label: 'Users', path: '/admin/users' },
     // Removed Subscriptions nav item entirely
