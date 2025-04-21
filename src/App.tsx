@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Public pages
@@ -75,76 +76,74 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/company-application" element={<CompanyApplication />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/company-application" element={<CompanyApplication />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-            {/* Protected routes - accessible by any authenticated user */}
-            <Route path="/messages" element={<Messages />} />
+          {/* Protected routes - accessible by any authenticated user */}
+          <Route path="/messages" element={<Messages />} />
 
-            {/* Admin routes */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/companies" element={<Companies />} />
-            <Route path="/admin/create-company" element={<CreateCompany />} />
-            <Route path="/admin/messages" element={<AdminMessages />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/jobs" element={<AdminJobs />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
+          {/* Admin routes */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/companies" element={<Companies />} />
+          <Route path="/admin/create-company" element={<CreateCompany />} />
+          <Route path="/admin/messages" element={<AdminMessages />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
+          <Route path="/admin/jobs" element={<AdminJobs />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
 
-            {/* Company routes */}
-            <Route path="/company/dashboard" element={<CompanyDashboard />} />
-            <Route path="/company/create-employee" element={<CreateEmployee />} />
-            <Route path="/company/branches" element={<Branches />} />
-            <Route path="/company/employees" element={<Employees />} />
+          {/* Company routes */}
+          <Route path="/company/dashboard" element={<CompanyDashboard />} />
+          <Route path="/company/create-employee" element={<CreateEmployee />} />
+          <Route path="/company/branches" element={<Branches />} />
+          <Route path="/company/employees" element={<Employees />} />
 
-            {/* Branch Manager routes */}
-            <Route path="/branch/dashboard" element={<BranchDashboard />} />
-            <Route path="/branch/employees" element={<BranchEmployees />} />
-            <Route path="/branch/create-employee" element={<BranchCreateEmployee />} />
-            <Route path="/branch/tasks" element={<BranchTasks />} />
-            <Route path="/branch/reports" element={<BranchReports />} />
-            <Route path="/branch/messages" element={<BranchMessages />} />
-            <Route path="/branch/settings" element={<BranchSettings />} />
+          {/* Branch Manager routes */}
+          <Route path="/branch/dashboard" element={<BranchDashboard />} />
+          <Route path="/branch/employees" element={<BranchEmployees />} />
+          <Route path="/branch/create-employee" element={<BranchCreateEmployee />} />
+          <Route path="/branch/tasks" element={<BranchTasks />} />
+          <Route path="/branch/reports" element={<BranchReports />} />
+          <Route path="/branch/messages" element={<BranchMessages />} />
+          <Route path="/branch/settings" element={<BranchSettings />} />
 
-            {/* Assistant Manager routes */}
-            <Route path="/assistant/dashboard" element={<AssistantDashboard />} />
-            <Route path="/assistant/employees" element={<AssistantEmployees />} />
-            <Route path="/assistant/create-employee" element={<AssistantCreateEmployee />} />
-            <Route path="/assistant/tasks" element={<AssistantTasks />} />
-            <Route path="/assistant/reports" element={<AssistantReports />} />
-            <Route path="/assistant/messages" element={<AssistantMessages />} />
-            <Route path="/assistant/profile" element={<AssistantProfile />} />
+          {/* Assistant Manager routes */}
+          <Route path="/assistant/dashboard" element={<AssistantDashboard />} />
+          <Route path="/assistant/employees" element={<AssistantEmployees />} />
+          <Route path="/assistant/create-employee" element={<AssistantCreateEmployee />} />
+          <Route path="/assistant/tasks" element={<AssistantTasks />} />
+          <Route path="/assistant/reports" element={<AssistantReports />} />
+          <Route path="/assistant/messages" element={<AssistantMessages />} />
+          <Route path="/assistant/profile" element={<AssistantProfile />} />
 
-            {/* Employee routes */}
-            <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
-            <Route path="/employee/reports" element={<EmployeeReports />} />
-            <Route path="/employee/messages" element={<EmployeeMessages />} />
-            <Route path="/employee/tasks" element={<EmployeeTasks />} />
-            <Route path="/employee/profile" element={<EmployeeProfile />} />
+          {/* Employee routes */}
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          <Route path="/employee/reports" element={<EmployeeReports />} />
+          <Route path="/employee/messages" element={<EmployeeMessages />} />
+          <Route path="/employee/tasks" element={<EmployeeTasks />} />
+          <Route path="/employee/profile" element={<EmployeeProfile />} />
 
-            {/* Job Seeker routes */}
-            <Route path="/jobseeker/dashboard" element={<JobSeekerDashboard />} />
-            <Route path="/jobseeker/jobs" element={<JobSeekerJobs />} />
-            <Route path="/jobseeker/applications" element={<JobSeekerApplications />} />
-            <Route path="/jobseeker/profile" element={<JobSeekerProfile />} />
-            <Route path="/jobseeker/messages" element={<JobSeekerMessages />} />
+          {/* Job Seeker routes */}
+          <Route path="/jobseeker/dashboard" element={<JobSeekerDashboard />} />
+          <Route path="/jobseeker/jobs" element={<JobSeekerJobs />} />
+          <Route path="/jobseeker/applications" element={<JobSeekerApplications />} />
+          <Route path="/jobseeker/profile" element={<JobSeekerProfile />} />
+          <Route path="/jobseeker/messages" element={<JobSeekerMessages />} />
 
-            {/* Catch-all route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+          {/* Catch-all route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
