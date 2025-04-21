@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -27,7 +26,7 @@ const Login: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   
   useEffect(() => {
     if (user) {
@@ -44,12 +43,12 @@ const Login: React.FC = () => {
       admin: '/admin/dashboard',
       company: '/company/dashboard',
       branch_manager: '/branch/dashboard',
-      assistant_manager: '/branch/dashboard',
+      assistant_manager: '/assistant/dashboard',
       employee: '/employee/dashboard',
-      job_seeker: '/dashboard'
+      job_seeker: '/jobseeker/dashboard'
     };
 
-    const redirectPath = roleRedirects[role] || '/dashboard';
+    const redirectPath = roleRedirects[role] || '/';
     navigate(redirectPath, { replace: true });
   };
 
@@ -58,11 +57,16 @@ const Login: React.FC = () => {
     setIsLoading(true);
     
     try {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      
       toast({
         title: "Login successful",
         description: "You have been logged in to your account.",
       });
+      
+      if (result?.user?.role) {
+        redirectBasedOnRole(result.user.role);
+      }
     } catch (error: any) {
       toast({
         title: "Login failed",
