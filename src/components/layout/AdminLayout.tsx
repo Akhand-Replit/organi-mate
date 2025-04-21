@@ -10,7 +10,6 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  CreditCard,
   Briefcase,
   UserPlus
 } from 'lucide-react';
@@ -27,7 +26,7 @@ const AdminLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { icon: Building2, label: 'Companies', path: '/admin/companies' },
     { icon: UserPlus, label: 'Create Company', path: '/admin/create-company' },
     { icon: Users, label: 'Users', path: '/admin/users' },
-    { icon: CreditCard, label: 'Subscriptions', path: '/admin/subscriptions' },
+    // Removed Subscriptions nav item entirely
     { icon: FileText, label: 'Reports', path: '/admin/reports' },
     { icon: Briefcase, label: 'Job Board', path: '/admin/jobs' },
     { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
