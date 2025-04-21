@@ -15,11 +15,13 @@ import { createUser } from '@/lib/auth';
 import { UserRole } from '@/lib/auth';
 import CompanyForm from '@/components/admin/CompanyForm';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useNavigate } from 'react-router-dom';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (formData: {
     name: string;
@@ -51,13 +53,18 @@ const CreateCompany = () => {
         description: `${formData.name} has been successfully created.`,
       });
       
+      // Redirect to companies list after successful creation
+      setTimeout(() => {
+        navigate('/admin/companies');
+      }, 1500);
+      
     } catch (error: any) {
       console.error("Error creating company:", error);
       let errorMessage = error.message || "There was a problem creating the company.";
       
       // Format Edge Function errors
-      if (errorMessage.includes("Edge Function returned a non-2xx status code")) {
-        errorMessage = "Server error: Failed to create company. Please try again later.";
+      if (errorMessage.includes("Edge Function") || errorMessage.includes("Failed to fetch")) {
+        errorMessage = "Network error: Unable to reach the server. The company might have been created - please check the companies list.";
       }
       
       setError(errorMessage);

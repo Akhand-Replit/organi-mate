@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { hashPassword, comparePassword } from './passwordUtils';
@@ -143,47 +144,128 @@ export async function createUser(userData: CreateUserData) {
       branch_id
     });
     
+    // For admin creating a company user, we'll first try with Edge Function
+    // but have a direct Supabase API fallback in case the function fails
+    const isAdminCreatingCompany = role === 'company';
+    
     // Get current session
     const session = await getSession();
-    let headers: Record<string, string> = {};
     
-    // For static admin (which has no actual JWT token)
-    if (session?.user.id === 'admin-user-id') {
-      headers = {
-        'X-Admin-Auth': 'static-admin-token'
-      };
-    } 
-    // For normal authenticated users with valid tokens
-    else if (session?.access_token) {
-      headers = {
-        'Authorization': `Bearer ${session.access_token}`
-      };
-    }
-    
-    const { data, error } = await supabase.functions.invoke('create-user', {
-      body: {
-        email,
-        password,
-        userData: {
-          name,
-          role,
-          company_id,
-          branch_id
+    if (isAdminCreatingCompany) {
+      try {
+        // Try Edge Function first
+        let headers: Record<string, string> = {};
+        
+        // For static admin (which has no actual JWT token)
+        if (session?.user.id === 'admin-user-id') {
+          headers = {
+            'X-Admin-Auth': 'static-admin-token'
+          };
+        } 
+        // For normal authenticated users with valid tokens
+        else if (session?.access_token) {
+          headers = {
+            'Authorization': `Bearer ${session.access_token}`
+          };
         }
-      },
-      headers
-    });
-    
-    if (error) {
-      console.error("Supabase function error:", error);
-      throw new Error(`Function error: ${error.message}`);
+        
+        const { data, error } = await supabase.functions.invoke('create-user', {
+          body: {
+            email,
+            password,
+            userData: {
+              name,
+              role,
+              company_id,
+              branch_id
+            }
+          },
+          headers
+        });
+        
+        if (error) throw error;
+        
+        if (!data) {
+          throw new Error("No data returned from function");
+        }
+        
+        return data;
+      } catch (edgeFunctionError) {
+        console.log("Edge Function failed, falling back to direct API:", edgeFunctionError);
+        
+        // Fall back to direct API approach if Edge Function fails
+        // Register the user
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name,
+              role,
+              company_id,
+              branch_id
+            }
+          }
+        });
+        
+        if (authError) throw authError;
+        
+        // Create company record
+        if (authData?.user) {
+          const { error: companyError } = await supabase
+            .from('companies')
+            .insert({
+              name,
+              user_id: authData.user.id
+            });
+            
+          if (companyError) throw companyError;
+        }
+        
+        return authData;
+      }
+    } else {
+      // For other user types, still try the Edge Function as before
+      let headers: Record<string, string> = {};
+      
+      // For static admin (which has no actual JWT token)
+      if (session?.user.id === 'admin-user-id') {
+        headers = {
+          'X-Admin-Auth': 'static-admin-token'
+        };
+      } 
+      // For normal authenticated users with valid tokens
+      else if (session?.access_token) {
+        headers = {
+          'Authorization': `Bearer ${session.access_token}`
+        };
+      }
+      
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email,
+          password,
+          userData: {
+            name,
+            role,
+            company_id,
+            branch_id
+          }
+        },
+        headers
+      });
+      
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw new Error(`Function error: ${error.message}`);
+      }
+      
+      if (!data) {
+        throw new Error("No data returned from function");
+      }
+      
+      return data;
     }
-    
-    if (!data) {
-      throw new Error("No data returned from function");
-    }
-    
-    return data;
   } catch (error) {
     console.error("Error in createUser:", error);
     throw error;
