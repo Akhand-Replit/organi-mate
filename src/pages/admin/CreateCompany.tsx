@@ -17,6 +17,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { hashPassword } from '@/lib/passwordUtils';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);

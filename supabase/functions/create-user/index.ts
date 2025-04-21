@@ -1,9 +1,10 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-auth",
 };
 
 serve(async (req) => {
@@ -52,12 +53,15 @@ serve(async (req) => {
 
     // Get the authorization header from the request
     const authorizationHeader = req.headers.get('Authorization')?.split(' ')[1];
+    const adminAuthHeader = req.headers.get('X-Admin-Auth');
     
     // Check if we're creating a company through the public application form
     // In this case, we won't have a valid auth token
     const isPublicCompanyCreation = userData.role === 'company' && !authorizationHeader;
+    // Check if it's a static admin request
+    const isStaticAdminRequest = adminAuthHeader === 'static-admin-token';
     
-    if (!authorizationHeader && !isPublicCompanyCreation) {
+    if (!authorizationHeader && !isPublicCompanyCreation && !isStaticAdminRequest) {
       console.log("Missing authorization header");
       return new Response(
         JSON.stringify({ error: "Missing authorization header" }),
@@ -71,8 +75,8 @@ serve(async (req) => {
     let authUser = null;
     let profile = null;
 
-    // Only verify auth for non-public company creation
-    if (!isPublicCompanyCreation) {
+    // Only verify auth for non-public company creation and non-static admin requests
+    if (!isPublicCompanyCreation && !isStaticAdminRequest) {
       console.log("Getting user from auth header");
       // Get the user from the auth header
       const { data: authData, error: authError } = await supabaseClient.auth.getUser(authorizationHeader);
@@ -200,6 +204,32 @@ serve(async (req) => {
     }
 
     console.log("User created successfully, now handling additional operations based on role");
+
+    // Add credentials to user_credentials table
+    try {
+      // Hash the password before storing
+      const { data: functions } = await supabaseClient.rpc('hash_password', { 
+        pass: password 
+      });
+      
+      const password_hash = functions || password; // Fallback to raw password if hashing fails
+      
+      const { error: credError } = await supabaseClient
+        .from('user_credentials')
+        .insert({
+          user_id: newUser.user?.id,
+          username: email,
+          password_hash
+        });
+        
+      if (credError) {
+        console.warn("Error storing credentials:", credError);
+        // Non-fatal error, continue
+      }
+    } catch (credError) {
+      console.warn("Failed to store credentials:", credError);
+      // Non-fatal error, continue
+    }
 
     // If company user is created, create a company record
     if (userData.role === 'company' && newUser.user) {
