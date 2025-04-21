@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -67,8 +66,16 @@ export function AddJobDialog({ open, onOpenChange, onSuccess }: AddJobDialogProp
   async function onSubmit(values: JobFormValues) {
     try {
       const { error } = await jobsTable.create({
-        ...values,
+        title: values.title,
+        company: values.company,
+        location: values.location,
+        description: values.description,
+        requirements: values.requirements,
+        job_type: values.job_type,
+        category: values.category,
+        salary_range: values.salary_range || null,
         is_active: true,
+        employment_type: values.job_type,
       });
       
       if (error) throw error;

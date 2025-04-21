@@ -17,10 +17,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { format, formatDistanceToNow } from 'date-fns';
+import { Job } from '@/lib/supabase-types';
 
 const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
@@ -123,16 +124,7 @@ const Jobs: React.FC = () => {
 };
 
 interface JobCardProps {
-  job: {
-    id: string;
-    title: string;
-    company: string;
-    location: string;
-    job_type: string;
-    salary_range?: string;
-    description: string;
-    created_at: string;
-  };
+  job: Job;
 }
 
 const JobCard: React.FC<JobCardProps> = ({ job }) => {
