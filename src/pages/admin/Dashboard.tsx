@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Users, Briefcase, CheckSquare } from 'lucide-react';
 import AdminLayout from '@/components/layout/AdminLayout';
+import { PendingApprovalsCard } from "./components/PendingApprovalsCard";
 
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -76,34 +76,8 @@ const AdminDashboard: React.FC = () => {
           
           <Card>
             <CardHeader>
-              <CardTitle>Pending Approvals</CardTitle>
-              <CardDescription>Items requiring your attention</CardDescription>
+              <PendingApprovalsCard />
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center">
-                  <CheckSquare className="h-5 w-5 text-blue-500 mr-3" />
-                  <div>
-                    <p className="font-medium">Company Registration</p>
-                    <p className="text-sm text-muted-foreground">2 pending registrations</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <CheckSquare className="h-5 w-5 text-purple-500 mr-3" />
-                  <div>
-                    <p className="font-medium">Subscription Upgrades</p>
-                    <p className="text-sm text-muted-foreground">4 pending requests</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <CheckSquare className="h-5 w-5 text-amber-500 mr-3" />
-                  <div>
-                    <p className="font-medium">Support Messages</p>
-                    <p className="text-sm text-muted-foreground">7 unread messages</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
           </Card>
         </div>
       </div>

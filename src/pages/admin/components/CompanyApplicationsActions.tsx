@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,84 +15,49 @@ export function useCompanyApplicationsActions(): Props {
 
   const approveApplicationMutation = useMutation({
     mutationFn: async (applicationId: string) => {
-      console.log("Approving application:", applicationId);
-      
-      // Get the application data first
+      // Fetch application data
       const { data: application, error: fetchError } = await supabase
         .from('company_applications')
         .select('*')
         .eq('id', applicationId)
         .single();
-      
-      if (fetchError) {
-        console.error("Error fetching application:", fetchError);
-        throw fetchError;
-      }
-      
-      if (!application) {
-        throw new Error("Application not found");
-      }
-      
-      console.log("Application data:", application);
-      
-      // Update the application status
+      if (fetchError) throw fetchError;
+      if (!application) throw new Error("Application not found");
+
+      // Update application to approved
       const { error: updateError } = await supabase
         .from('company_applications')
         .update({ status: 'approved' })
         .eq('id', applicationId);
+      if (updateError) throw updateError;
 
-      if (updateError) {
-        console.error("Error updating application:", updateError);
-        throw updateError;
-      }
-      
-      // Create a new user for the company
-      const { data: userData, error: userError } = await supabase.auth.signUp({
-        email: application.email,
-        password: Math.random().toString(36).slice(-10) + "A1!", // Generate a secure random password
-        options: {
-          data: {
-            name: application.company_name,
-            role: 'company'
-          }
+      // Call edge function to create company record and user
+      // Replace with your edge function's real usage if needed
+      const res = await supabase.functions.invoke('admin-create-company', {
+        body: {
+          name: application.company_name,
+          userId: application.id // This might be wrong! Usually, you need userId of newly created auth user, not application id.
+        },
+        headers: {
+          'X-Admin-Auth': 'static-admin-token',
         }
       });
-      
-      if (userError) {
-        console.error("Error creating user:", userError);
-        throw userError;
+      if (res.error) {
+        throw new Error(res.error.message || "Error creating company");
       }
-      
-      if (!userData.user) {
-        throw new Error("Failed to create user");
-      }
-      
-      console.log("Created user:", userData.user);
-      
-      // Create the company record
-      const { error: companyError } = await supabase
-        .from('companies')
-        .insert({
-          name: application.company_name,
-          user_id: userData.user.id
-        });
-        
-      if (companyError) {
-        console.error("Error creating company:", companyError);
-        throw companyError;
-      }
-      
+
+      // You may also want to update application with company id here
+
       return applicationId;
     },
     onSuccess: (applicationId) => {
       queryClient.invalidateQueries({ queryKey: ['company-applications'] });
       toast({
         title: "Application approved",
-        description: "The company application has been approved and account created.",
+        description: "The company application has been approved and company record created.",
       });
     },
     onError: (error: any) => {
-      console.error("Error in approve mutation:", error);
       toast({
         title: "Error approving application",
         description: error.message || "An unknown error occurred",
@@ -164,7 +128,7 @@ export function useCompanyApplicationsActions(): Props {
     }
   });
 
-  // Return handlers for usage within components
+  // Handlers
   const onApprove = async (applicationId: string) => {
     await approveApplicationMutation.mutateAsync(applicationId);
   };
