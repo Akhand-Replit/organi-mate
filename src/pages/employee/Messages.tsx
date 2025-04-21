@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import EmployeeLayout from '@/components/layout/EmployeeLayout';
 import {
@@ -17,53 +16,9 @@ const EmployeeMessages: React.FC = () => {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   
-  // Mocked conversations data
-  const mockConversations = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      role: 'Assistant Manager',
-      lastMessage: 'Please complete your daily inventory report',
-      time: '2 hours ago',
-      unread: true
-    },
-    {
-      id: '2',
-      name: 'Michael Chen',
-      role: 'Branch Manager',
-      lastMessage: 'Team meeting tomorrow at 9am',
-      time: 'Yesterday',
-      unread: false
-    }
-  ];
-  
-  // Mock messages for the selected conversation
-  const mockMessages = [
-    {
-      id: '1',
-      senderId: '1', // Sarah Johnson
-      text: 'Hi John, I need you to complete your daily inventory report for today. Let me know if you have any questions.',
-      timestamp: '2025-05-06T14:30:00Z'
-    },
-    {
-      id: '2',
-      senderId: 'current-user', // Employee
-      text: 'Hi Sarah, I\'m working on it now. Should be done in an hour.',
-      timestamp: '2025-05-06T14:35:00Z'
-    },
-    {
-      id: '3',
-      senderId: '1', // Sarah Johnson
-      text: 'Perfect. Also, don\'t forget we have a team meeting tomorrow at 9am to discuss the new promotion.',
-      timestamp: '2025-05-06T14:38:00Z'
-    },
-    {
-      id: '4',
-      senderId: 'current-user', // Employee
-      text: 'Thanks for the reminder. I\'ll be there.',
-      timestamp: '2025-05-06T14:40:00Z'
-    }
-  ];
+  // Mocked conversations/messages removed
+  const mockConversations: any[] = [];
+  const mockMessages: any[] = [];
   
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -72,9 +27,6 @@ const EmployeeMessages: React.FC = () => {
   
   const handleSendMessage = () => {
     if (!messageText.trim()) return;
-    
-    // In a real app, this would send the message to the backend
-    console.log('Sending message:', messageText);
     setMessageText('');
   };
   
@@ -101,46 +53,52 @@ const EmployeeMessages: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {mockConversations.map((conversation) => (
-                  <div 
-                    key={conversation.id} 
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedConversation === conversation.id 
-                        ? 'bg-primary/20' 
-                        : conversation.unread 
-                          ? 'bg-primary/10 hover:bg-primary/15' 
-                          : 'hover:bg-muted'
-                    }`}
-                    onClick={() => setSelectedConversation(conversation.id)}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                          <User className="h-4 w-4 text-primary" />
+                {mockConversations.length > 0 ? (
+                  mockConversations.map((conversation) => (
+                    <div 
+                      key={conversation.id} 
+                      className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                        selectedConversation === conversation.id 
+                          ? 'bg-primary/20' 
+                          : conversation.unread 
+                            ? 'bg-primary/10 hover:bg-primary/15' 
+                            : 'hover:bg-muted'
+                      }`}
+                      onClick={() => setSelectedConversation(conversation.id)}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+                            <User className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <span className={`font-medium block ${conversation.unread ? 'font-semibold' : ''}`}>
+                              {conversation.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {conversation.role}
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <span className={`font-medium block ${conversation.unread ? 'font-semibold' : ''}`}>
-                            {conversation.name}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {conversation.role}
-                          </span>
-                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {conversation.time}
+                        </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {conversation.time}
-                      </span>
+                      <p className={`text-sm truncate ${conversation.unread ? 'font-medium' : 'text-muted-foreground'}`}>
+                        {conversation.lastMessage}
+                      </p>
+                      {conversation.unread && (
+                        <div className="flex justify-end">
+                          <span className="h-2 w-2 rounded-full bg-primary mt-1"></span>
+                        </div>
+                      )}
                     </div>
-                    <p className={`text-sm truncate ${conversation.unread ? 'font-medium' : 'text-muted-foreground'}`}>
-                      {conversation.lastMessage}
-                    </p>
-                    {conversation.unread && (
-                      <div className="flex justify-end">
-                        <span className="h-2 w-2 rounded-full bg-primary mt-1"></span>
-                      </div>
-                    )}
+                  ))
+                ) : (
+                  <div className="text-center text-muted-foreground py-6">
+                    No conversations yet.
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -165,29 +123,35 @@ const EmployeeMessages: React.FC = () => {
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="h-[400px] overflow-y-auto p-4 space-y-4">
-                    {mockMessages.map(message => (
-                      <div 
-                        key={message.id} 
-                        className={`flex ${message.senderId === 'current-user' ? 'justify-end' : 'justify-start'}`}
-                      >
+                    {mockMessages.length > 0 ? (
+                      mockMessages.map(message => (
                         <div 
-                          className={`max-w-[80%] rounded-lg p-3 ${
-                            message.senderId === 'current-user' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-muted'
-                          }`}
+                          key={message.id} 
+                          className={`flex ${message.senderId === 'current-user' ? 'justify-end' : 'justify-start'}`}
                         >
-                          <p>{message.text}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.senderId === 'current-user' 
-                              ? 'text-primary-foreground/70' 
-                              : 'text-muted-foreground'
-                          }`}>
-                            {formatTime(message.timestamp)}
-                          </p>
+                          <div 
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.senderId === 'current-user' 
+                                ? 'bg-primary text-primary-foreground' 
+                                : 'bg-muted'
+                            }`}
+                          >
+                            <p>{message.text}</p>
+                            <p className={`text-xs mt-1 ${
+                              message.senderId === 'current-user' 
+                                ? 'text-primary-foreground/70' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {formatTime(message.timestamp)}
+                            </p>
+                          </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-muted-foreground py-10">
+                        No messages yet.
                       </div>
-                    ))}
+                    )}
                   </div>
                   <div className="p-4 border-t">
                     <div className="flex gap-2">

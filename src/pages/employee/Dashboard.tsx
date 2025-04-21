@@ -16,15 +16,15 @@ const EmployeeDashboard = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
+  // Remove default mock tasks/messages/hours
   const [tasks, setTasks] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [hoursWorked, setHoursWorked] = useState(32); // Mock data for now
-
+  const [hoursWorked, setHoursWorked] = useState(0); // Set to zero
+  
   useEffect(() => {
     const getEmployeeProfile = async () => {
       if (!user) return;
-      
       try {
         // Use the security definer function to avoid infinite recursion
         const { data, error } = await supabase.rpc('get_employee_by_user_id', {
@@ -132,7 +132,7 @@ const EmployeeDashboard = () => {
   }
 
   const pendingTasksCount = tasks.filter(task => task.status === 'pending' || task.status === 'in-progress').length;
-  const reportsCount = 1; // Mock data - can be updated with actual reports count
+  const reportsCount = 0; // No mock reports
 
   return (
     <EmployeeLayout>

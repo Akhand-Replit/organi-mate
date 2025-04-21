@@ -28,16 +28,16 @@ const EmployeeProfile: React.FC = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   
-  // Mock user data
+  // Removed mock user data
   const [formData, setFormData] = useState({
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '555-987-6543',
-    address: '456 Oak St, Anytown, USA',
-    company: 'ABC Corporation',
-    branch: 'Downtown Branch',
-    role: 'General Employee',
-    department: 'Sales'
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    company: '',
+    branch: '',
+    role: '',
+    department: ''
   });
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,9 +49,7 @@ const EmployeeProfile: React.FC = () => {
   };
   
   const handleSave = () => {
-    // In a real app, this would save to the backend
     setIsEditing(false);
-    
     toast({
       title: "Profile updated",
       description: "Your profile information has been updated successfully.",
