@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -69,6 +68,7 @@ import JobSeekerMessages from "./pages/jobseeker/Messages";
 // Add these new imports
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import JobDetail from './pages/JobDetail';
 
 const queryClient = new QueryClient();
 
@@ -141,6 +141,9 @@ const App = () => (
           <Route path="/jobseeker/applications" element={<JobSeekerApplications />} />
           <Route path="/jobseeker/profile" element={<JobSeekerProfile />} />
           <Route path="/jobseeker/messages" element={<JobSeekerMessages />} />
+
+          {/* Job Detail route */}
+          <Route path="/jobs/:id" element={<JobDetail />} />
 
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />

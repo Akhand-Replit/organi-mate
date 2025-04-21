@@ -43,6 +43,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { AddJobDialog } from './components/AddJobDialog';
 
 const AdminJobs: React.FC = () => {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -50,6 +51,7 @@ const AdminJobs: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('jobs');
+  const [addJobDialogOpen, setAddJobDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -171,6 +173,46 @@ const AdminJobs: React.FC = () => {
     }
   };
   
+  const handleAddJobSuccess = () => {
+    // Refetch jobs after successful creation
+    if (activeTab === 'jobs') {
+      fetchJobs();
+    }
+  };
+  
+  const fetchJobs = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          id, 
+          title,
+          company,
+          location,
+          category,
+          job_type,
+          is_active,
+          created_at
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      setJobs(data || []);
+    } catch (error: any) {
+      console.error('Error fetching jobs:', error);
+      toast({
+        title: 'Error loading jobs',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -212,7 +254,7 @@ const AdminJobs: React.FC = () => {
             <h1 className="text-3xl font-bold">Job Board</h1>
             <p className="text-muted-foreground">Manage job listings and applications</p>
           </div>
-          <Button>
+          <Button onClick={() => setAddJobDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Job
           </Button>
@@ -455,6 +497,12 @@ const AdminJobs: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AddJobDialog 
+        open={addJobDialogOpen} 
+        onOpenChange={setAddJobDialogOpen}
+        onSuccess={handleAddJobSuccess}
+      />
     </AdminLayout>
   );
 };

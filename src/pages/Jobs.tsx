@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,61 +12,55 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import Layout from '@/components/layout/Layout';
-import { Search, Briefcase, MapPin, Building2, Filter } from 'lucide-react';
+import { Search, Briefcase, MapPin, Building2, Filter, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
+import { format, formatDistanceToNow } from 'date-fns';
 
 const Jobs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   
-  // Mock job listings
-  const jobs = [
-    {
-      id: 1,
-      title: 'Frontend Developer',
-      company: 'TechCorp Inc.',
-      location: 'New York, NY',
-      type: 'Full-time',
-      salary: '$90,000 - $120,000',
-      description: 'We are looking for an experienced Frontend Developer proficient in React, TypeScript, and modern CSS frameworks.',
-      postedAt: '2 days ago',
-    },
-    {
-      id: 2,
-      title: 'Marketing Manager',
-      company: 'Global Marketing Solutions',
-      location: 'Remote',
-      type: 'Full-time',
-      salary: '$75,000 - $95,000',
-      description: 'Seeking a Marketing Manager to lead our digital marketing campaigns and strategy development.',
-      postedAt: '1 week ago',
-    },
-    {
-      id: 3,
-      title: 'Project Manager',
-      company: 'Construction Experts LLC',
-      location: 'Chicago, IL',
-      type: 'Contract',
-      salary: '$85,000 - $110,000',
-      description: 'Experienced Project Manager needed to oversee commercial construction projects from inception to completion.',
-      postedAt: '3 days ago',
-    },
-    {
-      id: 4,
-      title: 'Customer Support Specialist',
-      company: 'SupportHub',
-      location: 'Remote',
-      type: 'Part-time',
-      salary: '$25 - $30 per hour',
-      description: 'Join our customer support team to help clients with product-related inquiries and technical assistance.',
-      postedAt: '5 days ago',
-    },
-  ];
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        setJobs(data || []);
+      } catch (error: any) {
+        console.error('Error fetching jobs:', error);
+        toast({
+          title: 'Error loading jobs',
+          description: error.message,
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchJobs();
+  }, [toast]);
   
   // Filter jobs based on search term
-  const filteredJobs = jobs.filter(job => 
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredJobs = searchTerm
+    ? jobs.filter(job => 
+        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        job.job_type.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : jobs;
 
   return (
     <Layout>
@@ -104,7 +98,11 @@ const Jobs: React.FC = () => {
           </div>
           
           <div className="space-y-6">
-            {filteredJobs.length > 0 ? (
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : filteredJobs.length > 0 ? (
               filteredJobs.map(job => (
                 <JobCard key={job.id} job={job} />
               ))
@@ -126,14 +124,14 @@ const Jobs: React.FC = () => {
 
 interface JobCardProps {
   job: {
-    id: number;
+    id: string;
     title: string;
     company: string;
     location: string;
-    type: string;
-    salary: string;
+    job_type: string;
+    salary_range?: string;
     description: string;
-    postedAt: string;
+    created_at: string;
   };
 }
 
@@ -150,9 +148,9 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
             </CardDescription>
           </div>
           <div className="text-right">
-            <span className="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full">
-              {job.type}
-            </span>
+            <Badge variant="outline" className="bg-primary/10 text-primary text-sm px-3 py-1 rounded-full capitalize">
+              {job.job_type}
+            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -160,14 +158,18 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
         <div className="flex items-center text-muted-foreground mb-3">
           <MapPin className="h-4 w-4 mr-1" />
           <span className="text-sm">{job.location}</span>
-          <span className="mx-2">•</span>
-          <span className="text-sm">{job.salary}</span>
+          {job.salary_range && (
+            <>
+              <span className="mx-2">•</span>
+              <span className="text-sm">{job.salary_range}</span>
+            </>
+          )}
         </div>
         <p className="text-sm line-clamp-2">{job.description}</p>
       </CardContent>
       <CardFooter className="flex justify-between pt-2">
         <span className="text-xs text-muted-foreground">
-          Posted {job.postedAt}
+          Posted {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
         </span>
         <Link to={`/jobs/${job.id}`}>
           <Button variant="outline" className="text-sm h-8">
