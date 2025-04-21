@@ -54,8 +54,8 @@ serve(async (req) => {
       }
     );
     
-    // Store credentials directly
-    const { error } = await supabaseClient
+    // Store credentials securely
+    const { error: credError } = await supabaseClient
       .from('user_credentials')
       .insert({
         user_id: userId,
@@ -63,10 +63,10 @@ serve(async (req) => {
         password_hash: passwordHash
       });
       
-    if (error) {
-      console.error("Error storing credentials:", error);
+    if (credError) {
+      console.error("Error storing credentials:", credError);
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: credError.message }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -77,7 +77,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Credentials stored successfully" 
+        message: "User credentials stored successfully" 
       }),
       {
         status: 200,

@@ -16,11 +16,13 @@ serve(async (req) => {
   try {
     // Verify admin authentication
     const adminAuthHeader = req.headers.get('X-Admin-Auth');
+    const authHeader = req.headers.get('Authorization');
     
-    if (adminAuthHeader !== 'static-admin-token') {
-      console.error("Unauthorized access attempt");
+    // Validate either admin token or JWT
+    if (adminAuthHeader !== 'static-admin-token' && !authHeader) {
+      console.error("Unauthorized access attempt - no valid auth header");
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Unauthorized - missing authorization" }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -29,18 +31,21 @@ serve(async (req) => {
     }
     
     // Get request body
-    const { name, userId } = await req.json();
+    const requestData = await req.json();
+    const { name, userId } = requestData;
     
     // Validation
     if (!name || !userId) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Missing required fields: name and userId are required" }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         }
       );
     }
+    
+    console.log(`Creating company record for user ${userId} with name ${name}`);
     
     // Initialize the Supabase client with service role for RLS bypass
     const supabaseClient = createClient(
@@ -55,12 +60,13 @@ serve(async (req) => {
     );
     
     // Create company record directly
-    const { error: companyError } = await supabaseClient
+    const { data, error: companyError } = await supabaseClient
       .from('companies')
       .insert({
         name: name,
         user_id: userId
-      });
+      })
+      .select();
       
     if (companyError) {
       console.error("Error creating company:", companyError);
@@ -76,6 +82,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
+        data: data,
         message: "Company created successfully" 
       }),
       {

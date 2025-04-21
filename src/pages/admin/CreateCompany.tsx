@@ -10,16 +10,13 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { UserPlus } from 'lucide-react';
-import { createUser } from '@/lib/auth';
-import { UserRole } from '@/lib/auth';
-import CompanyForm from '@/components/admin/CompanyForm';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { hashPassword } from '@/lib/passwordUtils';
+import CompanyForm from '@/components/admin/CompanyForm';
 
-const CreateCompany = () => {
+const CreateCompany: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -38,8 +35,7 @@ const CreateCompany = () => {
     try {
       console.log("Creating company with data:", {
         email: formData.email,
-        name: formData.name,
-        role: 'company'
+        name: formData.name
       });
       
       // For static admin user, directly create the company
@@ -68,59 +64,42 @@ const CreateCompany = () => {
           throw new Error("Failed to create user account - no user ID returned");
         }
         
-        // Create the company record directly with RLS bypass
-        const { error: companyError } = await supabase.functions.invoke('admin-create-company', {
-          body: {
+        console.log("User created successfully, now creating company record for ID:", userId);
+        
+        // Create the company record directly
+        const { error: companyError } = await supabase
+          .from('companies')
+          .insert({
             name: formData.name,
-            userId: userId
-          },
-          headers: {
-            'X-Admin-Auth': 'static-admin-token' // Special header to authenticate the static admin
-          }
-        });
+            user_id: userId
+          });
           
         if (companyError) {
           console.error("Error inserting company record:", companyError);
           throw new Error(`Failed to create company record: ${companyError.message}`);
         }
         
-        // Also add record to user_credentials table through edge function
-        try {
-          const password_hash = await hashPassword(formData.password);
-          const { error: credError } = await supabase.functions.invoke('admin-store-credentials', {
-            body: {
-              userId: userId,
-              username: formData.email,
-              passwordHash: password_hash
-            },
-            headers: {
-              'X-Admin-Auth': 'static-admin-token'
-            }
-          });
-            
-          if (credError) {
-            console.warn("Error storing credentials:", credError);
-            // Non-fatal error, continue
-          }
-        } catch (credError) {
-          console.warn("Failed to store credentials:", credError);
-          // Non-fatal error, continue
-        }
+        console.log("Company record created successfully");
+        
       } else {
-        // For normal admin users, use the createUser function
-        const result = await createUser({
-          email: formData.email,
-          password: formData.password,
-          name: formData.name,
-          role: 'company' as UserRole,
+        // For normal admin users, use the Edge Function
+        const { data, error } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: formData.email,
+            password: formData.password,
+            userData: {
+              name: formData.name,
+              role: 'company'
+            }
+          }
         });
         
-        console.log("Create user result:", result);
-        
-        // Check if there's a user ID in the result
-        if (!result?.user?.id) {
-          throw new Error("Failed to create user account");
+        if (error) {
+          console.error("Edge function error:", error);
+          throw new Error(`Function error: ${error.message}`);
         }
+        
+        console.log("Create user function result:", data);
       }
       
       toast({

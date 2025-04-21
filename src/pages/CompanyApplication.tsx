@@ -43,8 +43,10 @@ const CompanyApplication: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log("Submitting company application:", formData);
+      
       // Submit the company application request
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('company_applications')
         .insert({
           company_name: formData.companyName,
@@ -53,9 +55,15 @@ const CompanyApplication: React.FC = () => {
           address: formData.address,
           description: formData.description,
           status: 'pending'
-        });
+        })
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error submitting application:", error);
+        throw error;
+      }
+      
+      console.log("Application submitted successfully:", data);
       
       toast({
         title: "Application Submitted",
@@ -64,6 +72,7 @@ const CompanyApplication: React.FC = () => {
       
       navigate('/login');
     } catch (error: any) {
+      console.error("Application submission error:", error);
       toast({
         title: "Application Failed",
         description: error.message || "There was a problem with your application.",

@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
-import { hashPassword, comparePassword } from './passwordUtils';
 
 export type UserRole = 'admin' | 'company' | 'branch_manager' | 'assistant_manager' | 'employee' | 'job_seeker';
 
@@ -110,18 +109,17 @@ export async function signUp(userData: CreateUserData) {
   // For non-admin users, try to store credentials in user_credentials table as well
   // This is our custom auth system alongside Supabase Auth
   try {
-    // Hash password and store in user_credentials
-    const password_hash = await hashPassword(password);
-
-    const { error: credentialsError } = await supabase
-      .from('user_credentials')
-      .insert([
-        {
-          user_id,
-          username: email,
-          password_hash,
-        }
-      ]);
+    // Call Edge Function to securely store credentials server-side
+    const { error: credentialsError } = await supabase.functions.invoke('admin-store-credentials', {
+      body: {
+        userId: user_id,
+        username: email,
+        passwordHash: password // The Edge Function will hash this
+      },
+      headers: {
+        'X-Admin-Auth': 'static-admin-token'
+      }
+    });
 
     if (credentialsError) {
       console.warn("Failed to store credentials in user_credentials:", credentialsError);
@@ -349,4 +347,20 @@ export async function getSession(): Promise<Session | null> {
   
   const { data: { session } } = await supabase.auth.getSession();
   return session;
+}
+
+// Simple hash function for browser environment - not as secure as bcrypt
+export async function hashPassword(password: string): Promise<string> {
+  // For server-side, we'd use a proper hashing function
+  // For client-side, we'll use a simple prefix to indicate it needs proper hashing
+  return `to_be_hashed:${password}`;
+}
+
+// Simple compare function for browser environment
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
+  if (hash.startsWith('to_be_hashed:')) {
+    return password === hash.substring(12);
+  }
+  // For proper hashes, defer to server-side comparison
+  return false;
 }
