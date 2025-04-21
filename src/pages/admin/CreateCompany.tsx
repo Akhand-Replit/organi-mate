@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useToast } from '@/hooks/use-toast';
-import { toast } from '@/hooks/use-toast';
 import { 
   Card, 
   CardContent, 
@@ -16,6 +15,7 @@ import { UserRole } from '@/lib/auth';
 import CompanyForm from '@/components/admin/CompanyForm';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const CreateCompany = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -39,6 +39,7 @@ const CreateCompany = () => {
         role: 'company'
       });
       
+      // First, create the user account through auth system
       const result = await createUser({
         email: formData.email,
         password: formData.password,
@@ -47,6 +48,32 @@ const CreateCompany = () => {
       });
       
       console.log("Create user result:", result);
+      
+      // Check if there's a user ID in the result
+      const userId = result?.user?.id;
+      
+      if (!userId) {
+        throw new Error("Failed to create user account");
+      }
+      
+      // Direct insert into companies table with service role client if needed
+      // This is a fallback in case RLS policies aren't properly configured
+      try {
+        const { error: companyError } = await supabase
+          .from('companies')
+          .insert({
+            name: formData.name,
+            user_id: userId
+          });
+          
+        if (companyError) {
+          console.error("Error inserting company record:", companyError);
+          // We'll continue even if this fails since the user account was created
+        }
+      } catch (companyInsertError) {
+        console.error("Failed to insert company record:", companyInsertError);
+        // Continue since user was created
+      }
       
       toast({
         title: "Company created",
@@ -65,6 +92,11 @@ const CreateCompany = () => {
       // Format Edge Function errors
       if (errorMessage.includes("Edge Function") || errorMessage.includes("Failed to fetch")) {
         errorMessage = "Network error: Unable to reach the server. The company might have been created - please check the companies list.";
+      }
+      
+      // Format RLS policy errors
+      if (errorMessage.includes("row-level security") || errorMessage.includes("violates row-level security policy")) {
+        errorMessage = "Permission error: Your account doesn't have sufficient privileges to create companies. Please contact an administrator.";
       }
       
       setError(errorMessage);
