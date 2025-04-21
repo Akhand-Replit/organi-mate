@@ -41,29 +41,33 @@ const CreateCompany = () => {
         role: 'company'
       });
       
-      // First, create the user account through auth system
-      const result = await createUser({
-        email: formData.email,
-        password: formData.password,
-        name: formData.name,
-        role: 'company' as UserRole,
-      });
-      
-      console.log("Create user result:", result);
-      
-      // Check if there's a user ID in the result
-      const userId = result?.user?.id;
-      
-      if (!userId) {
-        throw new Error("Failed to create user account");
-      }
-      
-      // Special handling for static admin user
+      // For static admin user, directly create the company
       if (user?.id === 'admin-user-id') {
-        console.log("Static admin user detected, using special permission flow");
+        console.log("Static admin user detected, using direct user creation");
         
-        // When logged in as static admin, we need to use service role directly
-        // This bypasses RLS since static admin doesn't have a real DB record
+        // First, create the user account
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              role: 'company'
+            }
+          }
+        });
+        
+        if (authError) {
+          console.error("Error creating user account:", authError);
+          throw new Error(`Failed to create user account: ${authError.message}`);
+        }
+        
+        const userId = authData?.user?.id;
+        if (!userId) {
+          throw new Error("Failed to create user account - no user ID returned");
+        }
+        
+        // Create the company record directly
         const { error: companyError } = await supabase
           .from('companies')
           .insert({
@@ -75,23 +79,40 @@ const CreateCompany = () => {
           console.error("Error inserting company record:", companyError);
           throw new Error(`Failed to create company record: ${companyError.message}`);
         }
-      } else {
-        // Try direct insert as fallback for other admin users
+        
+        // Also add record to user_credentials table
         try {
-          const { error: companyError } = await supabase
-            .from('companies')
+          const password_hash = await hashPassword(formData.password);
+          const { error: credError } = await supabase
+            .from('user_credentials')
             .insert({
-              name: formData.name,
-              user_id: userId
+              user_id: userId,
+              username: formData.email,
+              password_hash
             });
             
-          if (companyError) {
-            console.error("Error inserting company record:", companyError);
-            // We'll continue even if this fails since the user account was created
+          if (credError) {
+            console.warn("Error storing credentials:", credError);
+            // Non-fatal error, continue
           }
-        } catch (companyInsertError) {
-          console.error("Failed to insert company record:", companyInsertError);
-          // Continue since user was created
+        } catch (credError) {
+          console.warn("Failed to store credentials:", credError);
+          // Non-fatal error, continue
+        }
+      } else {
+        // For normal admin users, use the createUser function
+        const result = await createUser({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+          role: 'company' as UserRole,
+        });
+        
+        console.log("Create user result:", result);
+        
+        // Check if there's a user ID in the result
+        if (!result?.user?.id) {
+          throw new Error("Failed to create user account");
         }
       }
       

@@ -63,33 +63,27 @@ export async function signIn(email: string, password: string) {
     };
   }
   
-  // Find credentials by username (email)
-  const { data, error } = await supabase
-    .from('user_credentials')
-    .select('user_id, password_hash')
-    .eq('username', email)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (!data) throw new Error("Invalid username or password.");
-
-  const { user_id, password_hash } = data;
-
-  const passwordValid = await comparePassword(password, password_hash);
-  if (!passwordValid) throw new Error("Invalid username or password.");
-
-  // Issue a Supabase session (let's use the native auth)
-  // Use "magic link" or token-based login if required. Here, we can sign in directly:
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  if (authError) throw authError;
-
-  return {
-    user: authData.user,
-    session: authData.session,
-  };
+  // Use native Supabase auth for all non-admin logins
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (authError) throw authError;
+    
+    if (!authData.user) {
+      throw new Error("Invalid username or password.");
+    }
+    
+    return {
+      user: authData.user as UserData,
+      session: authData.session
+    };
+  } catch (error) {
+    console.error("Sign in error:", error);
+    throw error;
+  }
 }
 
 /**
@@ -113,20 +107,30 @@ export async function signUp(userData: CreateUserData) {
   const user_id = signUpData?.user?.id;
   if (!user_id) throw new Error("User ID not found after sign up.");
 
-  // Hash password and store in user_credentials
-  const password_hash = await hashPassword(password);
+  // For non-admin users, try to store credentials in user_credentials table as well
+  // This is our custom auth system alongside Supabase Auth
+  try {
+    // Hash password and store in user_credentials
+    const password_hash = await hashPassword(password);
 
-  const { error: credentialsError } = await supabase
-    .from('user_credentials')
-    .insert([
-      {
-        user_id,
-        username: email,
-        password_hash,
-      }
-    ]);
+    const { error: credentialsError } = await supabase
+      .from('user_credentials')
+      .insert([
+        {
+          user_id,
+          username: email,
+          password_hash,
+        }
+      ]);
 
-  if (credentialsError) throw credentialsError;
+    if (credentialsError) {
+      console.warn("Failed to store credentials in user_credentials:", credentialsError);
+      // We don't throw here because the user was created in Supabase Auth
+    }
+  } catch (error) {
+    console.warn("Error storing user credentials:", error);
+    // We don't throw here because the user was created in Supabase Auth
+  }
 
   return signUpData;
 }
@@ -136,7 +140,7 @@ export async function createUser(userData: CreateUserData) {
   const { email, password, name, role, company_id, branch_id } = userData;
   
   try {
-    console.log("Invoking create-user function with data:", {
+    console.log("Creating user with data:", {
       email,
       role,
       name,
@@ -305,20 +309,24 @@ export async function getCurrentUser(): Promise<UserData | null> {
   
   if (user) {
     // Get profile data to include role, company_id, etc.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    
-    if (profile) {
-      return {
-        ...user,
-        role: profile.role,
-        company_id: profile.company_id,
-        branch_id: profile.branch_id,
-        name: profile.name
-      };
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        return {
+          ...user,
+          role: profile.role,
+          company_id: profile.company_id,
+          branch_id: profile.branch_id,
+          name: profile.name
+        };
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
     }
   }
   
