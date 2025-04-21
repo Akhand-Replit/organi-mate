@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +16,7 @@ export function useCompanyApplicationsActions(): Props {
 
   const approveApplicationMutation = useMutation({
     mutationFn: async (applicationId: string) => {
-      // Fetch application data
+      // 1. Fetch application data
       const { data: application, error: fetchError } = await supabase
         .from('company_applications')
         .select('*')
@@ -24,43 +25,65 @@ export function useCompanyApplicationsActions(): Props {
       if (fetchError) throw fetchError;
       if (!application) throw new Error("Application not found");
 
-      // Update application to approved
+      // 2. Update application to approved
       const { error: updateError } = await supabase
         .from('company_applications')
         .update({ status: 'approved' })
         .eq('id', applicationId);
       if (updateError) throw updateError;
 
-      // Call edge function to create company record and user
-      // Replace with your edge function's real usage if needed
-      const res = await supabase.functions.invoke('admin-create-company', {
+      // 3. Try to create a company *and* a new user for company owner (using edge function)
+      // We'll use the application's email as the company owner email.
+      // Use a random temporary password for the new user
+      const tempPassword = crypto.randomUUID().replace(/-/g, '').slice(0, 12) + "!A1";
+      const companyOwnerEmail = application.email;
+      const companyName = application.company_name;
+      const companyOwnerName = companyName + " Admin";
+
+      // Call create-user edge function as admin to create both the user and company
+      const res = await supabase.functions.invoke('create-user', {
         body: {
-          name: application.company_name,
-          userId: application.id // This might be wrong! Usually, you need userId of newly created auth user, not application id.
+          email: companyOwnerEmail,
+          password: tempPassword,
+          userData: {
+            name: companyOwnerName,
+            role: 'company',
+            company_id: null,
+            branch_id: null
+          }
         },
         headers: {
           'X-Admin-Auth': 'static-admin-token',
         }
       });
-      if (res.error) {
-        throw new Error(res.error.message || "Error creating company");
+
+      // If the edge function returns error, revert the application back to pending
+      if (res.error || (res.data && res.data.error)) {
+        // Revert status to 'pending'
+        await supabase
+          .from('company_applications')
+          .update({ status: 'pending' })
+          .eq('id', applicationId);
+
+        let message = res.error?.message || (res.data && res.data.error) || "Unknown error";
+        throw new Error("Failed to create user and company: " + message);
       }
 
-      // You may also want to update application with company id here
-
+      // Optionally: You could update application with company record ID, but not exposed yet
       return applicationId;
     },
     onSuccess: (applicationId) => {
       queryClient.invalidateQueries({ queryKey: ['company-applications'] });
       toast({
         title: "Application approved",
-        description: "The company application has been approved and company record created.",
+        description: "The company has been created and the owner set up. The company owner should receive an invite.",
       });
     },
     onError: (error: any) => {
+      console.error("Error approving company application:", error);
       toast({
         title: "Error approving application",
-        description: error.message || "An unknown error occurred",
+        description: error.message || "An unknown error occurred while creating the company/user.",
         variant: "destructive",
       });
     }
@@ -145,3 +168,4 @@ export function useCompanyApplicationsActions(): Props {
 
   return { onApprove, onReject, onDelete };
 }
+
