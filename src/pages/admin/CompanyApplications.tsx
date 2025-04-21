@@ -32,6 +32,9 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { CompanyApplicationDialog } from './components/CompanyApplicationDialog';
+import { CompanyApplicationTableRow } from './components/CompanyApplicationTableRow';
+import { CompanyStatusBadge } from './components/CompanyStatusBadge';
 
 type CompanyApplication = {
   id: string;
@@ -171,18 +174,6 @@ const CompanyApplications: React.FC = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-500">Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
-      case 'pending':
-      default:
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-    }
-  };
-
   return (
     <AdminLayout>
       <div className="p-6">
@@ -220,47 +211,14 @@ const CompanyApplications: React.FC = () => {
                 <TableBody>
                   {applications && applications.length > 0 ? (
                     applications.map((application) => (
-                      <TableRow key={application.id}>
-                        <TableCell className="font-medium cursor-pointer hover:underline" 
-                          onClick={() => viewApplicationDetails(application)}>
-                          {application.company_name}
-                        </TableCell>
-                        <TableCell>{application.email}</TableCell>
-                        <TableCell>{getStatusBadge(application.status)}</TableCell>
-                        <TableCell>{formatDate(application.created_at)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            {application.status === 'pending' && (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleApprove(application.id)}
-                                  title="Approve"
-                                >
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleReject(application.id)}
-                                  title="Reject"
-                                >
-                                  <XCircle className="h-4 w-4 text-red-500" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              onClick={() => handleDelete(application.id)}
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <CompanyApplicationTableRow
+                        key={application.id}
+                        application={application}
+                        onApprove={handleApprove}
+                        onReject={handleReject}
+                        onDelete={handleDelete}
+                        onShowDetails={viewApplicationDetails}
+                      />
                     ))
                   ) : (
                     <TableRow>
@@ -281,76 +239,13 @@ const CompanyApplications: React.FC = () => {
         </Card>
 
         {selectedApplication && (
-          <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{selectedApplication.company_name}</DialogTitle>
-                <DialogDescription>
-                  Application Details
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div>
-                  <h4 className="text-sm font-medium">Status</h4>
-                  <p>{getStatusBadge(selectedApplication.status)}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Email</h4>
-                  <p>{selectedApplication.email}</p>
-                </div>
-                {selectedApplication.phone && (
-                  <div>
-                    <h4 className="text-sm font-medium">Phone</h4>
-                    <p>{selectedApplication.phone}</p>
-                  </div>
-                )}
-                {selectedApplication.address && (
-                  <div>
-                    <h4 className="text-sm font-medium">Address</h4>
-                    <p>{selectedApplication.address}</p>
-                  </div>
-                )}
-                {selectedApplication.description && (
-                  <div>
-                    <h4 className="text-sm font-medium">Description</h4>
-                    <p className="whitespace-pre-wrap">{selectedApplication.description}</p>
-                  </div>
-                )}
-                <div>
-                  <h4 className="text-sm font-medium">Submitted</h4>
-                  <p>{formatDate(selectedApplication.created_at)}</p>
-                </div>
-              </div>
-              <DialogFooter>
-                {selectedApplication.status === 'pending' && (
-                  <>
-                    <Button
-                      variant="outline" 
-                      className="border-red-500 text-red-500 hover:bg-red-50"
-                      onClick={() => {
-                        handleReject(selectedApplication.id);
-                        setShowDetailsDialog(false);
-                      }}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      className="bg-green-500 hover:bg-green-600"
-                      onClick={() => {
-                        handleApprove(selectedApplication.id);
-                        setShowDetailsDialog(false);
-                      }}
-                    >
-                      Approve
-                    </Button>
-                  </>
-                )}
-                <DialogClose asChild>
-                  <Button variant="secondary">Close</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <CompanyApplicationDialog
+            open={showDetailsDialog}
+            onOpenChange={setShowDetailsDialog}
+            application={selectedApplication}
+            onApprove={handleApprove}
+            onReject={handleReject}
+          />
         )}
       </div>
     </AdminLayout>
