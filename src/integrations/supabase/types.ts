@@ -344,32 +344,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           avatar_url: string | null
           branch_id: string | null
           company_id: string | null
           created_at: string
+          department: string | null
           id: string
           name: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
+          address?: string | null
           avatar_url?: string | null
           branch_id?: string | null
           company_id?: string | null
           created_at?: string
+          department?: string | null
           id: string
           name?: string | null
+          phone?: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
+          address?: string | null
           avatar_url?: string | null
           branch_id?: string | null
           company_id?: string | null
           created_at?: string
+          department?: string | null
           id?: string
           name?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }

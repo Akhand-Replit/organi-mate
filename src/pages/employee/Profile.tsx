@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ProfileRow, ProfileUpdate } from '@/lib/supabase-types';
+import { ProfileUpdate } from '@/lib/supabase-types';
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ const EmployeeProfile: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -42,43 +42,48 @@ const EmployeeProfile: React.FC = () => {
     role: '',
     department: ''
   });
-  
+
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!user) return;
 
       try {
+        // Fetch profile row from Supabase (with new fields added)
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('*, company_id, branch_id')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
-        
-        // Get company and branch data if available
+
+        if (!data) {
+          throw new Error("Profile data not found");
+        }
+
+        // Retrieve company name if applicable
         let companyName = '';
         let branchName = '';
-        
+
         if (data.company_id) {
           const { data: companyData } = await supabase
             .from('companies')
             .select('name')
             .eq('id', data.company_id)
-            .single();
-          
+            .maybeSingle();
+
           if (companyData) {
             companyName = companyData.name;
           }
         }
-        
+
         if (data.branch_id) {
           const { data: branchData } = await supabase
             .from('branches')
             .select('name')
             .eq('id', data.branch_id)
-            .single();
-          
+            .maybeSingle();
+
           if (branchData) {
             branchName = branchData.name;
           }
@@ -87,12 +92,12 @@ const EmployeeProfile: React.FC = () => {
         setFormData({
           name: data.name || '',
           email: user.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
+          phone: (data as any).phone || '',
+          address: (data as any).address || '',
           company: companyName,
           branch: branchName,
           role: data.role || '',
-          department: data.department || ''
+          department: (data as any).department || ''
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -106,7 +111,7 @@ const EmployeeProfile: React.FC = () => {
 
     fetchProfileData();
   }, [user, toast]);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -114,7 +119,7 @@ const EmployeeProfile: React.FC = () => {
       [name]: value
     }));
   };
-  
+
   const handleSave = async () => {
     if (!user) return;
 
@@ -123,7 +128,7 @@ const EmployeeProfile: React.FC = () => {
         name: formData.name,
         phone: formData.phone,
         address: formData.address,
-        department: formData.department
+        department: formData.department,
       };
 
       const { error } = await supabase
@@ -132,9 +137,9 @@ const EmployeeProfile: React.FC = () => {
         .eq('id', user.id);
 
       if (error) throw error;
-      
+
       setIsEditing(false);
-      
+
       toast({
         title: "Profile updated",
         description: "Your profile information has been updated successfully.",
@@ -174,7 +179,7 @@ const EmployeeProfile: React.FC = () => {
             </Button>
           )}
         </div>
-        
+
         <div className="grid gap-6">
           <Card>
             <CardHeader>
@@ -197,7 +202,7 @@ const EmployeeProfile: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="w-full md:w-2/3 space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-2">
@@ -214,7 +219,7 @@ const EmployeeProfile: React.FC = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="email">Email Address</Label>
                       <div className="relative">
@@ -231,7 +236,7 @@ const EmployeeProfile: React.FC = () => {
                         Email address cannot be changed
                       </p>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone Number</Label>
                       <div className="relative">
@@ -246,7 +251,7 @@ const EmployeeProfile: React.FC = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="address">Address</Label>
                       <div className="relative">
@@ -264,12 +269,12 @@ const EmployeeProfile: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Separator />
-              
+
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Company Information</h3>
-                
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="company">Company</Label>
@@ -284,7 +289,7 @@ const EmployeeProfile: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="branch">Branch</Label>
                     <div className="relative">
@@ -298,7 +303,7 @@ const EmployeeProfile: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <div className="relative">
@@ -312,7 +317,7 @@ const EmployeeProfile: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
                     <div className="relative">
@@ -339,7 +344,7 @@ const EmployeeProfile: React.FC = () => {
               </CardFooter>
             )}
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Security</CardTitle>
