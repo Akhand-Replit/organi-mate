@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +14,7 @@ import Jobs from "./pages/Jobs";
 import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
-import Profile from "./pages/Profile"; // Add the new Profile page
+import Profile from "./pages/Profile";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -23,7 +22,6 @@ import Companies from "./pages/admin/Companies";
 import CreateCompany from "./pages/admin/CreateCompany";
 import AdminMessages from "./pages/admin/Messages";
 import AdminUsers from "./pages/admin/Users";
-import AdminSubscriptions from "./pages/admin/Subscriptions";
 import AdminReports from "./pages/admin/Reports";
 import AdminJobs from "./pages/admin/Jobs";
 import AdminSettings from "./pages/admin/Settings";
@@ -88,7 +86,7 @@ const App = () => (
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/profile" element={<Profile />} /> {/* Add the new profile route */}
+          <Route path="/profile" element={<Profile />} />
 
           {/* Protected routes - accessible by any authenticated user */}
           <Route path="/messages" element={<Messages />} />
@@ -99,7 +97,6 @@ const App = () => (
           <Route path="/admin/create-company" element={<CreateCompany />} />
           <Route path="/admin/messages" element={<AdminMessages />} />
           <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
           <Route path="/admin/reports" element={<AdminReports />} />
           <Route path="/admin/jobs" element={<AdminJobs />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
