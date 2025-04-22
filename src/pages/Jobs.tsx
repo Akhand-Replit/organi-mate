@@ -63,6 +63,11 @@ const Jobs: React.FC = () => {
       )
     : jobs;
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is already handled by the filteredJobs logic
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-16">
@@ -74,7 +79,7 @@ const Jobs: React.FC = () => {
             </p>
           </div>
           
-          <div className="relative mb-12">
+          <form onSubmit={handleSearch} className="relative mb-12">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
               <Search className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -85,10 +90,10 @@ const Jobs: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Button className="absolute right-0 top-0 bottom-0 rounded-l-none">
+            <Button type="submit" className="absolute right-0 top-0 bottom-0 rounded-l-none">
               Search
             </Button>
-          </div>
+          </form>
           
           <div className="mb-8 flex justify-between items-center">
             <h2 className="text-2xl font-bold">Job Listings ({filteredJobs.length})</h2>

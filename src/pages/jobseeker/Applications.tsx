@@ -1,411 +1,166 @@
 
-import React from 'react';
-import JobSeekerLayout from '@/components/layout/JobSeekerLayout';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Tabs, 
-  TabsList, 
-  TabsTrigger, 
-  TabsContent 
-} from '@/components/ui/tabs';
-import { Building, MapPin, Calendar, ExternalLink, FileText, MessageSquare } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import JobSeekerLayout from '@/components/layout/JobSeekerLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Loader2, ExternalLink, Clock, Building2, Briefcase } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
-const JobSeekerApplications: React.FC = () => {
-  // Mock application data
-  const applications = [
-    {
-      id: '1',
-      position: 'Sales Associate',
-      company: 'ABC Corporation',
-      location: 'San Francisco, CA',
-      appliedDate: '2025-05-05',
-      status: 'Under Review',
-      notes: 'Waiting for feedback on initial application'
-    },
-    {
-      id: '2',
-      position: 'Customer Service Representative',
-      company: 'XYZ Company',
-      location: 'Denver, CO',
-      appliedDate: '2025-05-03',
-      status: 'Interview Scheduled',
-      interviewDate: '2025-05-15',
-      notes: 'Video interview scheduled for May 15, 2025 at 10:00 AM'
-    },
-    {
-      id: '3',
-      position: 'Store Manager',
-      company: 'Retail Giants Inc.',
-      location: 'Boston, MA',
-      appliedDate: '2025-04-28',
-      status: 'Rejected',
-      notes: 'Position filled with internal candidate'
-    },
-    {
-      id: '4',
-      position: 'Inventory Specialist',
-      company: 'Supply Chain Co.',
-      location: 'Chicago, IL',
-      appliedDate: '2025-04-25',
-      status: 'Assessment',
-      notes: 'Need to complete skills assessment by May 12'
-    }
-  ];
+interface JobApplication {
+  id: string;
+  job_id: string;
+  applicant_id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  resume_url: string | null;
+  cover_letter: string | null;
+  job: {
+    id: string;
+    title: string;
+    company: string;
+    location: string;
+  }
+}
 
-  const getStatusColor = (status: string) => {
+const Applications: React.FC = () => {
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchApplications = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('job_applications')
+          .select(`
+            *,
+            job:job_id (
+              id,
+              title,
+              company,
+              location
+            )
+          `)
+          .eq('applicant_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        setApplications(data || []);
+      } catch (error: any) {
+        console.error('Error fetching applications:', error);
+        toast({
+          title: 'Error loading applications',
+          description: error.message,
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApplications();
+  }, [user, toast]);
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'Under Review':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'Interview Scheduled':
-        return 'bg-green-100 text-green-800';
-      case 'Assessment':
-        return 'bg-blue-100 text-blue-800';
-      case 'Rejected':
-        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500">Pending</Badge>;
+      case 'reviewed':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-500">Reviewed</Badge>;
+      case 'interview':
+        return <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-500">Interview</Badge>;
+      case 'approved':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500">Approved</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500">Rejected</Badge>;
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
     <JobSeekerLayout>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">My Applications</h1>
-          <Button asChild>
-            <Link to="/jobseeker/jobs">Browse Jobs</Link>
-          </Button>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">My Applications</h1>
+          <Link to="/jobs">
+            <Button>Browse Jobs</Button>
+          </Link>
         </div>
         
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="interviews">Interviews</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Applications</CardTitle>
-                <CardDescription>
-                  All your job applications
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : applications.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {applications.map((application) => (
+              <Card key={application.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl">{application.job?.title || 'Unknown Position'}</CardTitle>
+                      <CardDescription className="flex items-center mt-1">
+                        <Building2 className="h-4 w-4 mr-1 inline" />
+                        {application.job?.company || 'Unknown Company'}
+                      </CardDescription>
+                    </div>
+                    {getStatusBadge(application.status)}
+                  </div>
+                </CardHeader>
+                <CardContent>
                   <div className="space-y-4">
-                    {applications.map(application => (
-                      <Card key={application.id}>
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <CardTitle>{application.position}</CardTitle>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Building className="h-3 w-3" />
-                                <span>{application.company}</span>
-                              </div>
-                            </div>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                              {application.status}
-                            </span>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-2">
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <MapPin className="h-3 w-3" />
-                              <span>{application.location}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Calendar className="h-3 w-3" />
-                              <span>Applied: {new Date(application.appliedDate).toLocaleDateString()}</span>
-                            </div>
-                            {application.interviewDate && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                <span>Interview: {new Date(application.interviewDate).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {application.notes && (
-                            <div className="mt-2 p-2 bg-muted rounded text-sm">
-                              <p>{application.notes}</p>
-                            </div>
-                          )}
-                        </CardContent>
-                        <div className="px-6 py-2 border-t flex justify-end gap-2">
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <FileText className="h-4 w-4" />
-                            View Application
-                          </Button>
-                          {application.status !== 'Rejected' && (
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <MessageSquare className="h-4 w-4" />
-                              Contact Recruiter
-                            </Button>
-                          )}
-                          <Button size="sm" variant="default" className="gap-1">
-                            <ExternalLink className="h-4 w-4" />
-                            View Job
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
+                    <div className="flex items-center text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span className="text-sm">Applied {formatDistanceToNow(new Date(application.created_at), { addSuffix: true })}</span>
+                    </div>
+                    {application.cover_letter && (
+                      <div>
+                        <h3 className="text-sm font-medium mb-1">Your Cover Letter</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-3">{application.cover_letter}</p>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    You haven't applied to any jobs yet.
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <div className="text-sm">
+                    {application.status === 'interview' && (
+                      <Badge variant="outline" className="bg-primary/10 text-primary">Interview Scheduled</Badge>
+                    )}
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="active" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Active Applications</CardTitle>
-                <CardDescription>
-                  Applications that are currently being processed
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.filter(app => app.status !== 'Rejected').length > 0 ? (
-                  <div className="space-y-4">
-                    {applications
-                      .filter(app => app.status !== 'Rejected')
-                      .map(application => (
-                        // Same card structure as above
-                        <Card key={application.id}>
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle>{application.position}</CardTitle>
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Building className="h-3 w-3" />
-                                  <span>{application.company}</span>
-                                </div>
-                              </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                                {application.status}
-                              </span>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            {/* Same content as above */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-2">
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span>{application.location}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                <span>Applied: {new Date(application.appliedDate).toLocaleDateString()}</span>
-                              </div>
-                              {application.interviewDate && (
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>Interview: {new Date(application.interviewDate).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {application.notes && (
-                              <div className="mt-2 p-2 bg-muted rounded text-sm">
-                                <p>{application.notes}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                          <div className="px-6 py-2 border-t flex justify-end gap-2">
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <FileText className="h-4 w-4" />
-                              View Application
-                            </Button>
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <MessageSquare className="h-4 w-4" />
-                              Contact Recruiter
-                            </Button>
-                            <Button size="sm" variant="default" className="gap-1">
-                              <ExternalLink className="h-4 w-4" />
-                              View Job
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    You don't have any active applications.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="interviews" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Interview Stage</CardTitle>
-                <CardDescription>
-                  Applications where you've been invited for an interview
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.filter(app => app.status === 'Interview Scheduled').length > 0 ? (
-                  <div className="space-y-4">
-                    {applications
-                      .filter(app => app.status === 'Interview Scheduled')
-                      .map(application => (
-                        // Same card structure
-                        <Card key={application.id}>
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle>{application.position}</CardTitle>
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Building className="h-3 w-3" />
-                                  <span>{application.company}</span>
-                                </div>
-                              </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                                {application.status}
-                              </span>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-2">
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span>{application.location}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                <span>Applied: {new Date(application.appliedDate).toLocaleDateString()}</span>
-                              </div>
-                              {application.interviewDate && (
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>Interview: {new Date(application.interviewDate).toLocaleDateString()}</span>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {application.notes && (
-                              <div className="mt-2 p-2 bg-muted rounded text-sm">
-                                <p>{application.notes}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                          <div className="px-6 py-2 border-t flex justify-end gap-2">
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <FileText className="h-4 w-4" />
-                              View Application
-                            </Button>
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <MessageSquare className="h-4 w-4" />
-                              Contact Recruiter
-                            </Button>
-                            <Button size="sm" variant="default" className="gap-1">
-                              <ExternalLink className="h-4 w-4" />
-                              View Job
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    You don't have any interviews scheduled yet.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="rejected" className="mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rejected Applications</CardTitle>
-                <CardDescription>
-                  Applications that weren't successful
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {applications.filter(app => app.status === 'Rejected').length > 0 ? (
-                  <div className="space-y-4">
-                    {applications
-                      .filter(app => app.status === 'Rejected')
-                      .map(application => (
-                        // Same card structure
-                        <Card key={application.id}>
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <CardTitle>{application.position}</CardTitle>
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Building className="h-3 w-3" />
-                                  <span>{application.company}</span>
-                                </div>
-                              </div>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(application.status)}`}>
-                                {application.status}
-                              </span>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pb-2">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-2">
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <MapPin className="h-3 w-3" />
-                                <span>{application.location}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="h-3 w-3" />
-                                <span>Applied: {new Date(application.appliedDate).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            
-                            {application.notes && (
-                              <div className="mt-2 p-2 bg-muted rounded text-sm">
-                                <p>{application.notes}</p>
-                              </div>
-                            )}
-                          </CardContent>
-                          <div className="px-6 py-2 border-t flex justify-end gap-2">
-                            <Button variant="outline" size="sm" className="gap-1">
-                              <FileText className="h-4 w-4" />
-                              View Application
-                            </Button>
-                            <Button size="sm" variant="default" className="gap-1">
-                              <ExternalLink className="h-4 w-4" />
-                              View Job
-                            </Button>
-                          </div>
-                        </Card>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    You don't have any rejected applications.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  <Link to={`/jobs/${application.job_id}`}>
+                    <Button variant="outline" size="sm" className="gap-1">
+                      <ExternalLink className="h-3 w-3" />
+                      View Job
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-muted/30 rounded-lg">
+            <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-medium mb-2">No applications yet</h3>
+            <p className="text-muted-foreground mb-6">You haven't applied to any jobs yet.</p>
+            <Link to="/jobs">
+              <Button>Browse Available Jobs</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </JobSeekerLayout>
   );
 };
 
-export default JobSeekerApplications;
+export default Applications;
