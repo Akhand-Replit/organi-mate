@@ -1,3 +1,4 @@
+
 // This file provides custom type definitions for Supabase tables that 
 // don't appear in the auto-generated types.
 // Use this for tables created after the initial setup or for local development.
@@ -169,9 +170,49 @@ export type JobApplication = {
   cover_letter?: string | null;
 };
 
+// Extended JobApplication with joined data
+export type ExtendedJobApplication = JobApplication & {
+  job_title?: string;
+  applicant_name?: string;
+  applicant_email?: string;
+  company_name?: string;
+};
+
 // Types for inserting data
-export type JobInsert = Omit<Job, 'id' | 'created_at' | 'updated_at'>;
-export type JobApplicationInsert = Omit<JobApplication, 'id' | 'created_at' | 'updated_at'>;
+export type JobInsert = {
+  id?: string;
+  title: string; 
+  company: string;
+  location: string;
+  description: string;
+  requirements: string;
+  job_type: string;
+  category: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  company_id?: string | null;
+  salary_range?: string | null;
+  employment_type?: string;
+  experience_level?: string | null;
+  skills?: string[] | null;
+  benefits?: string[] | null;
+};
+
+export type JobApplicationInsert = {
+  id?: string;
+  job_id: string;
+  applicant_id: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  status_updated_at?: string | null;
+  status_updated_by?: string | null;
+  interview_date?: string | null;
+  notes?: string | null;
+  resume_url?: string | null;
+  cover_letter?: string | null;
+};
 
 // Types for updating data
 export type JobUpdate = Partial<Omit<Job, 'id' | 'created_at' | 'updated_at'>>;

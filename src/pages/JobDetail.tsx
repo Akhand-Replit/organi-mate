@@ -80,7 +80,9 @@ const JobDetail: React.FC = () => {
     
     try {
       setIsSubmitting(true);
-      const newApplication: Partial<JobApplication> = {
+      
+      // Create a properly typed job application object with all required fields
+      const newApplication = {
         job_id: job.id,
         applicant_id: user.id,
         cover_letter: coverLetter,

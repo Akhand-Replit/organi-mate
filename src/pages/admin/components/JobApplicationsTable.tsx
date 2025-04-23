@@ -22,8 +22,15 @@ import { formatDistanceToNow } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { MoreHorizontal, User, Calendar } from 'lucide-react';
 
+// Extend the JobApplication type to include job and applicant info
+interface ExtendedJobApplication extends JobApplication {
+  job_title?: string;
+  applicant_name?: string;
+  // These are loaded from joins but not in the base type
+}
+
 interface JobApplicationsTableProps {
-  applications: JobApplication[];
+  applications: ExtendedJobApplication[];
   onStatusChange: () => void;
 }
 

@@ -10,6 +10,7 @@ export const jobFormSchema = z.object({
   job_type: z.string().min(1, { message: 'Job type is required' }),
   category: z.string().min(1, { message: 'Category is required' }),
   salary_range: z.string().optional(),
+  employment_type: z.string().optional(),
 });
 
 export type JobFormValues = z.infer<typeof jobFormSchema>;

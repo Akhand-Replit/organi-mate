@@ -47,11 +47,21 @@ export function AddJobDialog({ open, onOpenChange, onSuccess }: AddJobDialogProp
   
   async function onSubmit(values: JobFormValues) {
     try {
-      const { error } = await jobsTable.create({
-        ...values,
+      // Ensure all required fields are explicitly provided, not optional
+      const jobData = {
+        title: values.title,
+        company: values.company,
+        location: values.location,
+        description: values.description,
+        requirements: values.requirements,
+        job_type: values.job_type,
+        category: values.category,
         is_active: true,
         employment_type: values.job_type,
-      });
+        salary_range: values.salary_range,
+      };
+      
+      const { error } = await jobsTable.create(jobData);
       
       if (error) throw error;
       
