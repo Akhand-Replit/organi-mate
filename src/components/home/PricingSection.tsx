@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PricingTierProps {
@@ -49,7 +49,7 @@ const PricingTier: React.FC<PricingTierProps> = ({
       <ul className="space-y-3 mb-8">
         {features.map((feature, index) => (
           <li key={index} className="flex items-start">
-            <CheckCircle className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
+            <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
             <span>{feature}</span>
           </li>
         ))}

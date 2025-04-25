@@ -4,6 +4,22 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Building2, Users, CheckSquare, FileText, MessageSquare, Briefcase } from 'lucide-react';
 
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title }) => {
+  return (
+    <div className="bg-background/50 backdrop-blur-sm rounded-xl p-4 border border-border/50 hover:bg-background/80 transition-colors">
+      <div className="flex flex-col items-center text-center gap-2">
+        {icon}
+        <h3 className="text-sm font-medium">{title}</h3>
+      </div>
+    </div>
+  );
+};
+
 const Hero: React.FC = () => {
   return (
     <section className="relative pt-24 md:pt-32 pb-16 md:pb-24 overflow-hidden">
@@ -77,22 +93,6 @@ const Hero: React.FC = () => {
         </div>
       </div>
     </section>
-  );
-};
-
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title }) => {
-  return (
-    <div className="bg-background/50 backdrop-blur-sm rounded-xl p-4 border border-border/50 hover:bg-background/80 transition-colors">
-      <div className="flex flex-col items-center text-center gap-2">
-        {icon}
-        <h3 className="text-sm font-medium">{title}</h3>
-      </div>
-    </div>
   );
 };
 
