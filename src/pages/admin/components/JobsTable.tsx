@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ export function JobsTable({ jobs, onViewApplication }: JobsTableProps) {
           ...app,
           applicant_name: app.profiles?.name || 'Unknown',
           applicant_email: app.profiles?.email || 'No email'
-        })) as ExtendedJobApplication[];
+        }));
         
         console.log('Applications:', applicationsWithNames);
         
