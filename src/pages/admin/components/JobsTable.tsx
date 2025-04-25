@@ -33,9 +33,10 @@ export function JobsTable({ jobs, onViewApplication }: JobsTableProps) {
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Safe typing for data from join query
+        // Safely handle potential undefined values with optional chaining and fallbacks
         const applicationsWithNames = data.map(app => ({
           ...app,
+          // Safely access nested properties using optional chaining
           applicant_name: app.profiles?.name || 'Unknown',
           applicant_email: app.profiles?.email || 'No email'
         }));
